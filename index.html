@@ -1,0 +1,2571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>赛博修仙 · Cyber Cultivation v2.0</title>
+<style>
+  /* ============================================
+     嘉立创 JLCPCB 风格 · 科技蓝主题
+     主色: #1677FF  深蓝: #0958D9  浅蓝: #4096FF
+     背景: #0B1220  卡片: #111827  边框: #1E3A5F
+  ============================================ */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --blue-50:  #E6F4FF;
+    --blue-100: #BAE0FF;
+    --blue-200: #91CAFF;
+    --blue-300: #69B1FF;
+    --blue-400: #4096FF;
+    --blue-500: #1677FF;
+    --blue-600: #0958D9;
+    --blue-700: #003EB3;
+    --bg-main:  #0B1220;
+    --bg-card:  #111827;
+    --bg-card2: #1A2235;
+    --border:   #1E3A5F;
+    --border2:  #2D5A8C;
+    --text:     #E5F4FF;
+    --text-dim: #8B9EB5;
+    --gold:     #FAAD14;
+    --danger:   #FF4D4F;
+    --success:  #52C41A;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg-main);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    /* 科技感背景：蓝点网格 + 光晕 */
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(22,119,255,0.12) 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(64,150,255,0.10) 0%, transparent 40%),
+      linear-gradient(180deg, #0B1220 0%, #0A0F1C 100%);
+    background-attachment: fixed;
+  }
+  /* PCB网格背景 */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(22,119,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(22,119,255,0.035) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none; z-index: 0;
+  }
+  .app { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; padding: 16px; }
+
+  /* ========== 顶部状态栏 ========== */
+  .header {
+    background: linear-gradient(135deg, #111827 0%, #1A2235 100%);
+    border: 1px solid var(--border2);
+    border-top: 3px solid var(--blue-500);
+    border-radius: 0 0 12px 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 20px rgba(22,119,255,0.15), 0 0 60px rgba(22,119,255,0.05);
+  }
+  .header::before {
+    content: ''; display: block;
+    font-size: 0; height: 0;
+  }
+  .title {
+    font-size: 20px; font-weight: 700;
+    background: linear-gradient(90deg, var(--blue-300) 0%, var(--blue-500) 50%, var(--blue-300) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+    letter-spacing: 4px; text-align: center;
+  }
+  .realm-badge {
+    display: inline-block; padding: 4px 14px;
+    background: rgba(22,119,255,0.12);
+    border: 1px solid var(--blue-500);
+    border-radius: 20px;
+    color: var(--blue-300); font-size: 12px; font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat { font-size: 12px; }
+  .stat-label { color: var(--text-dim); font-size: 11px; font-weight: 500; margin-bottom: 3px; letter-spacing: 0.5px; }
+
+  /* ========== 示波器风格血条（蓝科技版） ========== */
+  .stat-bar {
+    position: relative;
+    height: 16px;
+    background: #0A1019;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-top: 2px;
+    overflow: hidden;
+  }
+  /* 示波器网格 */
+  .stat-bar::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(22,119,255,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(22,119,255,0.06) 1px, transparent 1px);
+    background-size: 6px 8px; z-index: 0;
+  }
+  /* 中线 */
+  .stat-bar::after {
+    content: ''; position: absolute; top: 50%; left: 0; right: 0;
+    border-top: 1px dashed rgba(22,119,255,0.15); z-index: 0;
+  }
+  .stat-fill {
+    position: relative; height: 100%;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+    border-radius: 3px;
+  }
+  /* HP */
+  .fill-hp { background: linear-gradient(90deg, #FF3B3B 0%, #FF7875 60%, #FFA39E 100%); box-shadow: 0 0 12px rgba(255,59,59,0.4); }
+  .fill-hp::after { content:''; position:absolute; inset:0; background:repeating-linear-gradient(90deg, transparent 0, transparent 5px, rgba(255,255,255,0.12) 5px, rgba(255,255,255,0.12) 7px); }
+  /* MP */
+  .fill-mp { background: linear-gradient(90deg, var(--blue-500) 0%, var(--blue-400) 60%, var(--blue-300) 100%); box-shadow: 0 0 12px rgba(22,119,255,0.5); }
+  .fill-mp::after { content:''; position:absolute; inset:0; background:repeating-linear-gradient(90deg, transparent 0, transparent 3px, rgba(255,255,255,0.15) 3px, rgba(255,255,255,0.15) 4px); }
+  /* EXP */
+  .fill-xp { background: linear-gradient(90deg, var(--gold) 0%, #FFD666 60%, #FFECB3 100%); box-shadow: 0 0 12px rgba(250,173,20,0.4); }
+
+  /* ========== 导航 ========== */
+  .nav { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+  .nav-btn {
+    flex: 1; min-width: 75px; padding: 10px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim);
+    cursor: pointer; font-size: 12px; font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: all 0.18s ease;
+    font-family: inherit;
+    border-radius: 6px 6px 0 0;
+  }
+  .nav-btn:hover { border-color: var(--blue-500); color: var(--blue-300); background: rgba(22,119,255,0.06); }
+  .nav-btn.active {
+    background: linear-gradient(180deg, var(--blue-500) 0%, var(--blue-600) 100%);
+    border-color: var(--blue-500);
+    border-bottom-color: var(--gold);
+    color: #fff; font-weight: 600;
+    box-shadow: 0 -2px 12px rgba(22,119,255,0.4);
+  }
+
+  /* ========== 面板 ========== */
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    min-height: 300px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03);
+    position: relative;
+  }
+  .panel::before {
+    content: attr(data-header);
+    position: absolute; top: -9px; left: 14px;
+    background: var(--blue-500); padding: 2px 10px;
+    color: #fff; font-size: 10px; font-weight: 600;
+    letter-spacing: 2px; border-radius: 4px;
+  }
+  .panel h2 {
+    color: var(--blue-300); margin-bottom: 14px; font-size: 14px;
+    font-weight: 600; letter-spacing: 1px;
+  }
+  .hidden { display: none !important; }
+
+  /* ========== 按钮 ========== */
+  .btn {
+    padding: 9px 16px;
+    background: var(--bg-card2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 12px; font-weight: 500;
+    transition: all 0.15s;
+    margin: 3px;
+    font-family: inherit;
+    border-radius: 6px;
+  }
+  .btn:hover:not(:disabled) {
+    border-color: var(--blue-400); color: var(--blue-300);
+    box-shadow: 0 0 10px rgba(22,119,255,0.3);
+    background: rgba(22,119,255,0.08);
+  }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn-primary { background: linear-gradient(180deg, var(--blue-500), var(--blue-600)); border-color: var(--blue-500); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: linear-gradient(180deg, var(--blue-400), var(--blue-500)); box-shadow: 0 0 14px rgba(22,119,255,0.5); }
+  .btn-danger { background: rgba(255,77,79,0.12); border-color: #FF4D4F; color: #FF7875; }
+  .btn-danger:hover:not(:disabled) { background: rgba(255,77,79,0.2); box-shadow: 0 0 10px rgba(255,77,79,0.4); }
+  .btn-success { background: rgba(82,196,26,0.12); border-color: #52C41A; color: #95DE64; }
+  .btn-success:hover:not(:disabled) { background: rgba(82,196,26,0.2); box-shadow: 0 0 10px rgba(82,196,26,0.4); }
+  .btn-gold { background: rgba(250,173,20,0.12); border-color: var(--gold); color: var(--gold); }
+  .btn-gold:hover:not(:disabled) { background: rgba(250,173,20,0.2); box-shadow: 0 0 10px rgba(250,173,20,0.4); }
+  .btn-info { background: rgba(22,119,255,0.12); border-color: var(--blue-400); color: var(--blue-300); }
+  .btn-info:hover:not(:disabled) { background: rgba(22,119,255,0.2); box-shadow: 0 0 10px rgba(22,119,255,0.4); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ========== ASCII 地图卡片（蓝科技风） ========== */
+  .region-card {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0; margin-bottom: 10px; cursor: pointer;
+    transition: all 0.2s; overflow: hidden;
+  }
+  .region-card:hover {
+    border-color: var(--blue-400);
+    box-shadow: 0 0 16px rgba(22,119,255,0.3);
+    transform: translateY(-1px);
+  }
+  .region-card.locked { opacity: 0.3; cursor: not-allowed; border-color: var(--border); box-shadow: none; transform: none; }
+  .region-ascii {
+    color: var(--blue-400);
+    font-size: 10px; line-height: 1;
+    padding: 8px 10px;
+    background: linear-gradient(180deg, rgba(22,119,255,0.08), rgba(22,119,255,0.02));
+    border-bottom: 1px solid var(--border);
+    font-family: 'Consolas', 'Courier New', monospace;
+    white-space: pre; overflow-x: auto;
+  }
+  .region-info { padding: 10px 14px; }
+  .region-name { font-weight: 600; font-size: 14px; color: var(--blue-200); letter-spacing: 1px; }
+  .region-desc { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .region-lv { font-size: 10px; color: var(--blue-500); margin-top: 6px; letter-spacing: 1px; font-weight: 500; }
+
+  /* ========== 战斗界面 ========== */
+  .battle-arena {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 10px; flex-wrap: wrap; gap: 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background: linear-gradient(180deg, rgba(22,119,255,0.04), rgba(22,119,255,0.01));
+    position: relative;
+  }
+  .battle-arena::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(22,119,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(22,119,255,0.03) 1px, transparent 1px);
+    background-size: 20px 20px; pointer-events: none; border-radius: 8px;
+  }
+  .combatant { text-align: center; flex: 1; min-width: 130px; position: relative; }
+  .combatant-sprite {
+    font-size: 50px; margin-bottom: 8px;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(22,119,255,0.5));
+  }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  .combatant-name { font-weight: 600; font-size: 13px; margin-bottom: 8px; color: var(--blue-200); letter-spacing: 1px; }
+  .combatant .stat-bar { width: 130px; margin: 0 auto; }
+  .combatant .stat-label { text-align: center; }
+  .enemy .combatant-sprite { filter: drop-shadow(0 0 10px rgba(255,77,79,0.6)); animation-delay: 1.5s; }
+  .enemy .combatant-name { color: #FF7875; }
+  .vs {
+    font-size: 22px; font-weight: 800;
+    color: var(--gold);
+    text-shadow: 0 0 15px rgba(250,173,20,0.6);
+    letter-spacing: 2px;
+    animation: vsPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes vsPulse { 0%,100%{transform:scale(1);opacity:0.8} 50%{transform:scale(1.2);opacity:1} }
+
+  /* 战斗日志 */
+  .battle-log {
+    background: #060A12;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px; margin: 10px 0; height: 110px; overflow-y: auto;
+    font-size: 11px; font-family: 'Consolas', 'Courier New', monospace;
+    line-height: 1.6;
+  }
+  .battle-log p { margin-bottom: 2px; }
+  .log-dmg { color: #FF7875; }
+  .log-heal { color: #95DE64; }
+  .log-skill { color: var(--blue-300); font-weight: 600; }
+  .log-info { color: var(--text-dim); }
+  .log-crit { color: #FF4D4F; font-weight: 700; text-shadow: 0 0 8px rgba(255,77,79,0.5); }
+  .battle-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* 命中特效 */
+  .hit-effect {
+    position: fixed; pointer-events: none;
+    font-size: 24px; font-weight: 700;
+    animation: hitPop 0.6s ease-out forwards;
+    z-index: 500; text-shadow: 0 0 12px currentColor;
+  }
+  @keyframes hitPop { 0%{opacity:1;transform:translateY(0) scale(0.5)} 30%{transform:translateY(-20px) scale(1.2)} 100%{opacity:0;transform:translateY(-60px) scale(1)} }
+
+  /* ========== 背包 / 元器件 / 合成 ========== */
+  .item-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .item-card {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px;
+    transition: all 0.15s;
+  }
+  .item-card:hover { border-color: var(--blue-400); box-shadow: 0 0 8px rgba(22,119,255,0.2); }
+  .item-name { font-weight: 600; font-size: 12px; color: var(--blue-200); }
+  .item-desc { font-size: 10px; color: var(--text-dim); margin-top: 3px; }
+  .item-qty { font-size: 11px; color: var(--gold); margin-top: 5px; font-weight: 600; }
+  .rarity-common { border-color: var(--border); }
+  .rarity-rare { border-color: var(--blue-400); box-shadow: 0 0 8px rgba(22,119,255,0.15); }
+  .rarity-epic { border-color: #9254DE; box-shadow: 0 0 8px rgba(146,84,222,0.15); }
+  .rarity-legend { border-color: var(--gold); box-shadow: 0 0 10px rgba(250,173,20,0.25); }
+
+  /* 元器件 */
+  .comp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .comp-card {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 8px; text-align: center;
+    transition: all 0.15s;
+  }
+  .comp-card:hover { border-color: var(--blue-500); box-shadow: 0 0 10px rgba(22,119,255,0.25); }
+  .comp-emoji { font-size: 22px; display: block; margin-bottom: 4px; }
+  .comp-name { font-size: 10px; color: var(--blue-300); font-weight: 500; letter-spacing: 0.5px; }
+  .comp-qty { font-size: 18px; color: var(--gold); font-weight: 700; margin-top: 2px; font-family: 'Consolas', monospace; }
+
+  /* 合成配方 */
+  .recipe-card {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px; margin-bottom: 10px;
+  }
+  .recipe-name { font-weight: 600; color: var(--blue-200); font-size: 12px; }
+  .recipe-desc { font-size: 10px; color: var(--text-dim); margin: 4px 0; }
+  .recipe-parts { font-size: 11px; color: var(--blue-300); margin: 6px 0; }
+  .recipe-parts .enough { color: #95DE64; }
+  .recipe-parts .lack { color: #FF7875; }
+
+  /* ========== 技能 ========== */
+  .skill-card {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px; margin-bottom: 8px;
+  }
+  .skill-name { font-weight: 600; color: var(--blue-200); font-size: 12px; letter-spacing: 1px; }
+  .skill-info { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+  .skill-cost { color: var(--blue-400); font-size: 10px; font-family: 'Consolas', monospace; }
+  .skill-card.locked { border-color: var(--border); opacity: 0.35; }
+
+  /* ========== 事件弹窗 ========== */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+  }
+  .modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border2);
+    border-top: 3px solid var(--blue-500);
+    border-radius: 10px;
+    padding: 22px; max-width: 420px; width: 100%;
+    box-shadow: 0 20px 60px rgba(22,119,255,0.3);
+  }
+  .modal-header {
+    color: var(--blue-500); font-weight: 700; font-size: 14px;
+    margin-bottom: 14px; letter-spacing: 2px;
+  }
+  .modal-ascii {
+    color: var(--blue-300); font-size: 10px; line-height: 1;
+    margin-bottom: 14px; white-space: pre;
+    font-family: 'Consolas', monospace;
+  }
+  .modal p { font-size: 12px; line-height: 1.7; margin-bottom: 16px; color: var(--text-dim); }
+  .modal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ========== Toast ========== */
+  .toast {
+    position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--blue-500);
+    color: var(--blue-100); padding: 10px 22px;
+    font-weight: 500; z-index: 200;
+    animation: slideDown 0.3s ease-out;
+    box-shadow: 0 8px 24px rgba(22,119,255,0.35);
+    font-size: 12px; letter-spacing: 0.5px;
+    border-radius: 6px;
+  }
+  @keyframes slideDown { from { transform: translateX(-50%) translateY(-60px); opacity: 0; } }
+
+  .empty-hint { text-align: center; color: var(--text-dim); padding: 30px 20px; font-size: 12px; }
+  .empty-hint::before { content: '// '; color: var(--blue-500); }
+
+  /* 滚动条 */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-main); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--blue-500); }
+
+  /* ========== ASCII 地图艺术配色 ========== */
+  .ascii-ruin { color: var(--blue-400); }
+  .ascii-forest { color: #52C41A; }
+  .ascii-web { color: #9254DE; }
+  .ascii-lab { color: var(--gold); }
+  .ascii-station { color: #FA8C16; }
+  .ascii-tower { color: #FF4D4F; }
+  .ascii-ascend { color: var(--blue-100); }
+  .ascii-circuit { color: #13C2C2; }
+  .ascii-memory { color: #722ED1; }
+  .ascii-cpu { color: #FA8C16; }
+  .ascii-battery { color: #A0D911; }
+
+  /* H3 小标题 */
+  h3 { font-size: 12px; color: var(--blue-400); margin-bottom: 10px; font-weight: 600; letter-spacing: 2px; }
+
+  /* ========== 合成配方网格（2列紧凑布局） ========== */
+  .recipe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .recipe-card-compact {
+    background: var(--bg-card2);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    min-height: 110px;
+    transition: all 0.15s;
+  }
+  .recipe-card-compact:hover { border-color: var(--blue-400); box-shadow: 0 0 12px rgba(22,119,255,0.2); }
+  .recipe-card-compact.ready { border-color: var(--blue-500); }
+  .recipe-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .recipe-head .name { font-weight: 600; color: var(--blue-200); font-size: 12px; }
+  .recipe-head .emoji { font-size: 18px; }
+  .recipe-parts-inline { font-size: 11px; margin: 4px 0; display: flex; flex-wrap: wrap; gap: 4px; }
+  .recipe-parts-inline span { padding: 1px 5px; border-radius: 3px; background: rgba(30,58,95,0.6); font-family: 'Consolas', monospace; }
+  .recipe-parts-inline .enough { color: #95DE64; background: rgba(82,196,26,0.12); }
+  .recipe-parts-inline .lack { color: #FF7875; background: rgba(255,77,79,0.12); }
+  .recipe-desc-inline { font-size: 10px; color: var(--text-dim); margin: 4px 0; line-height: 1.4; }
+  .recipe-btn-wrap { margin-top: auto; }
+
+  /* 合成台元器件概览更紧凑 */
+  .craft-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .craft-header h3 { margin: 0; }
+
+  /* ========== 仓库子Tab ========== */
+  .bag-tabs { display: flex; gap: 0; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .bag-tab {
+    flex: 1; padding: 8px; background: transparent; border: none;
+    border-bottom: 2px solid transparent; color: var(--text-dim);
+    cursor: pointer; font-size: 12px; font-weight: 500;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .bag-tab:hover { color: var(--blue-300); }
+  .bag-tab.active { color: var(--blue-300); border-bottom-color: var(--blue-500); font-weight: 600; }
+
+  /* ========== Tooltip ========== */
+  .tip {
+    position: relative; cursor: help;
+    display: inline-block; padding: 0 4px; margin-left: 4px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--border2); color: var(--blue-200);
+    font-size: 10px; font-weight: 700; text-align: center; line-height: 14px;
+  }
+  .tip::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+    background: #060A12; border: 1px solid var(--blue-500); color: var(--text);
+    padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 400;
+    letter-spacing: 0; white-space: nowrap; z-index: 300;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    opacity: 0; pointer-events: none; transition: opacity 0.15s;
+  }
+  .tip:hover::after { opacity: 1; }
+
+  /* ========== 战斗结算Modal ========== */
+  .settle-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border2);
+    border-radius: 12px; padding: 0;
+    max-width: 380px; width: 100%; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(22,119,255,0.4);
+  }
+  .settle-header {
+    padding: 16px 20px; text-align: center; font-size: 18px; font-weight: 700;
+    letter-spacing: 3px;
+  }
+  .settle-win .settle-header { background: linear-gradient(135deg, #0958D9, #1677FF); color: #fff; }
+  .settle-lose .settle-header { background: linear-gradient(135deg, #CF1322, #FF4D4F); color: #fff; }
+  .settle-body { padding: 18px 20px; }
+  .settle-enemy { font-size: 12px; color: var(--text-dim); text-align: center; margin-bottom: 14px; }
+  .settle-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 13px; }
+  .settle-row .label { color: var(--text-dim); }
+  .settle-row .val { font-weight: 600; font-family: 'Consolas', monospace; }
+  .settle-row.pos .val { color: #95DE64; }
+  .settle-row.neg .val { color: #FF7875; }
+  .settle-divider { height: 1px; background: var(--border); margin: 8px 0; }
+  .settle-drops { margin: 10px 0; }
+  .settle-drops h4 { font-size: 11px; color: var(--blue-400); margin-bottom: 6px; letter-spacing: 1px; font-weight: 600; }
+  .settle-drop-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .settle-chip {
+    background: rgba(22,119,255,0.12); border: 1px solid var(--border2);
+    border-radius: 14px; padding: 3px 10px; font-size: 11px;
+    font-family: 'Consolas', monospace;
+  }
+  .settle-actions { padding: 14px 20px; text-align: center; border-top: 1px solid var(--border); background: var(--bg-card2); }
+
+  /* ========== 新手引导Modal ========== */
+  .welcome-modal { max-width: 440px; }
+  .welcome-steps { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+  .welcome-step { display: flex; gap: 10px; font-size: 12px; line-height: 1.6; }
+  .welcome-step .num {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    background: var(--blue-500); color: #fff; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-size: 11px;
+  }
+  .welcome-step .content { color: var(--text-dim); }
+  .welcome-step .content b { color: var(--blue-200); }
+
+  /* ========== 空状态引导 ========== */
+  .empty-guide {
+    text-align: center; padding: 24px 16px; color: var(--text-dim); font-size: 12px;
+  }
+  .empty-guide .hint-title { font-size: 14px; color: var(--blue-300); margin-bottom: 6px; font-weight: 600; }
+  .empty-guide .hint-desc { margin-bottom: 14px; line-height: 1.6; }
+
+  /* ========== 紧凑网格（探索/法术/黑市） ========== */
+  .region-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .region-card .region-ascii { font-size: 9px; padding: 4px 6px; }
+  .region-card .region-info { padding: 6px 10px; }
+  .region-card .region-name { font-size: 12px; }
+  .region-card .region-desc { font-size: 10px; }
+  .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .skill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* ========== 玩家精灵 · 境界视觉进化 ========== */
+  .combatant-sprite { transition: all 0.5s ease; }
+  .realm-0 .combatant-sprite { filter: drop-shadow(0 0 6px #1677FF); }
+  .realm-1 .combatant-sprite { filter: drop-shadow(0 0 10px #FAAD14) drop-shadow(0 0 20px #1677FF); }
+  .realm-2 .combatant-sprite { filter: drop-shadow(0 0 14px #FFD700) drop-shadow(0 0 28px #FA8C16); animation: float 2.5s infinite, pulseGlow 1.5s infinite; }
+  .realm-3 .combatant-sprite { filter: drop-shadow(0 0 18px #FF4D4F) drop-shadow(0 0 36px #CF1322); }
+  .realm-4 .combatant-sprite { filter: drop-shadow(0 0 20px #722ED1) drop-shadow(0 0 40px #9254DE); animation: float 2s infinite, electric 1s infinite; }
+  .realm-5 .combatant-sprite { filter: drop-shadow(0 0 24px #13C2C2) drop-shadow(0 0 48px #36CFC9); animation: float 1.8s infinite, rainbow 3s linear infinite; }
+  .realm-6 .combatant-sprite { filter: drop-shadow(0 0 28px #FAAD14) drop-shadow(0 0 56px #FFD700); animation: float 1.5s infinite, starOrbit 4s linear infinite; }
+  .realm-7 .combatant-sprite { filter: drop-shadow(0 0 32px #FF4D4F) drop-shadow(0 0 64px #FAAD14); animation: float 1.2s infinite, thunder 0.8s infinite; }
+  .realm-8 .combatant-sprite { filter: drop-shadow(0 0 36px #FFEC3D) drop-shadow(0 0 72px #FF4D4F); animation: float 1s infinite, thunder 0.5s infinite, electric 0.8s infinite; }
+  .realm-9 .combatant-sprite { filter: drop-shadow(0 0 40px #FFD700) drop-shadow(0 0 80px #FFEC3D) drop-shadow(0 0 120px #FAAD14); animation: float 0.6s infinite, rainbow 1s linear infinite, starOrbit 2s linear infinite; }
+
+  @keyframes pulseGlow { 0%,100%{filter:drop-shadow(0 0 14px #FFD700)} 50%{filter:drop-shadow(0 0 24px #FFD700) drop-shadow(0 0 36px #FA8C16)} }
+  @keyframes electric { 0%,100%{transform:translateY(0)} 25%{transform:translateY(-3px) rotate(-2deg)} 75%{transform:translateY(-2px) rotate(2deg)} }
+  @keyframes rainbow { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
+  @keyframes starOrbit { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+  @keyframes thunder { 0%,90%,100%{opacity:1} 95%{opacity:0.4} }
+
+  /* 境界徽章颜色 */
+  .realm-badge[data-realm="0"] { border-color: #91CAFF; color: #91CAFF; }
+  .realm-badge[data-realm="1"] { border-color: #FAAD14; color: #FAAD14; box-shadow: 0 0 10px rgba(250,173,20,0.4); }
+  .realm-badge[data-realm="2"] { border-color: #FFD700; color: #FFD700; box-shadow: 0 0 12px rgba(255,215,0,0.5); }
+  .realm-badge[data-realm="3"] { border-color: #FF4D4F; color: #FF7875; box-shadow: 0 0 14px rgba(255,77,79,0.5); }
+  .realm-badge[data-realm="4"] { border-color: #722ED1; color: #B37FEB; box-shadow: 0 0 16px rgba(114,46,209,0.5); }
+  .realm-badge[data-realm="5"] { border-color: #13C2C2; color: #36CFC9; box-shadow: 0 0 16px rgba(19,194,194,0.5); }
+  .realm-badge[data-realm="6"] { border-color: #FA8C16; color: #FFC53D; box-shadow: 0 0 18px rgba(250,140,22,0.5); }
+  .realm-badge[data-realm="7"] { border-color: #FF4D4F; color: #FF7875; box-shadow: 0 0 20px rgba(255,77,79,0.6); }
+  .realm-badge[data-realm="8"] { border-color: #FFEC3D; color: #FFEC3D; box-shadow: 0 0 22px rgba(255,236,61,0.6); animation: flicker 2s infinite; }
+  .realm-badge[data-realm="9"] { border-color: #FFD700; color: #FFF; background: linear-gradient(135deg, #FAAD14, #FFD700); box-shadow: 0 0 30px rgba(255,215,0,0.7); }
+
+  /* ========== 战斗动态特效（方案A: 纯DOM+CSS） ========== */
+
+  /* 伤害数字飘字 */
+  .dmg-num {
+    position: absolute; left: 50%; top: 30%;
+    transform: translateX(-50%);
+    font-size: 28px; font-weight: 800; font-family: 'Consolas', monospace;
+    pointer-events: none; z-index: 200;
+    text-shadow: 0 0 8px currentColor, 0 2px 4px rgba(0,0,0,0.8);
+    animation: dmgFloat 1s ease-out forwards;
+  }
+  .dmg-num.normal { color: #fff; }
+  .dmg-num.crit { color: #FF4D4F; font-size: 36px; }
+  .dmg-num.spell { color: #1677FF; font-size: 32px; }
+  .dmg-num.heal { color: #95DE64; }
+  .dmg-num.mp { color: #69C0FF; font-size: 20px; }
+  @keyframes dmgFloat {
+    0% { opacity: 0; transform: translateX(-50%) translateY(0) scale(0.3); }
+    20% { opacity: 1; transform: translateX(-50%) translateY(-10px) scale(1.2); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-60px) scale(1); }
+  }
+
+  /* 火花粒子 */
+  .spark {
+    position: absolute; width: 6px; height: 6px;
+    background: #FFD700; border-radius: 1px;
+    pointer-events: none; z-index: 199;
+    animation: sparkFly 0.5s ease-out forwards;
+    box-shadow: 0 0 4px #FFD700;
+  }
+  .spark.red { background: #FF4D4F; box-shadow: 0 0 4px #FF7875; }
+  .spark.blue { background: #1677FF; box-shadow: 0 0 4px #4096FF; border-radius: 50%; }
+  @keyframes sparkFly {
+    0% { opacity: 1; transform: translate(0,0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.3); }
+  }
+
+  /* 爆炸波 */
+  .blast {
+    position: absolute; left: 50%; top: 50%;
+    width: 20px; height: 20px; border-radius: 50%;
+    transform: translate(-50%, -50%);
+    border: 3px solid #FFD700;
+    pointer-events: none; z-index: 198;
+    animation: blastWave 0.6s ease-out forwards;
+  }
+  .blast.blue { border-color: #1677FF; box-shadow: 0 0 20px #1677FF inset; }
+  .blast.red { border-color: #FF4D4F; box-shadow: 0 0 20px #FF4D4F inset; }
+  @keyframes blastWave {
+    0% { opacity: 1; width: 20px; height: 20px; }
+    100% { opacity: 0; width: 160px; height: 160px; }
+  }
+
+  /* 敌人受击摇晃 + 闪白 */
+  .combatant.shake .combatant-sprite {
+    animation: shakeHit 0.3s ease-in-out, flashWhite 0.15s ease-out;
+  }
+  @keyframes shakeHit {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px) rotate(-3deg); }
+    75% { transform: translateX(6px) rotate(3deg); }
+  }
+  @keyframes flashWhite {
+    0%,100% { filter: brightness(1); }
+    50% { filter: brightness(3) drop-shadow(0 0 20px #fff); }
+  }
+
+  /* 屏幕震动（战斗场地） */
+  .battle-arena.shake { animation: arenaShake 0.2s ease-in-out; }
+  @keyframes arenaShake {
+    0%,100% { transform: translate(0,0); }
+    20% { transform: translate(-4px,2px); }
+    40% { transform: translate(4px,-2px); }
+    60% { transform: translate(-3px,1px); }
+    80% { transform: translate(3px,-1px); }
+  }
+
+  /* 玩家攻击蓄力（发光） */
+  .combatant.player.charging .combatant-sprite {
+    animation: chargeGlow 0.4s ease-out;
+  }
+  @keyframes chargeGlow {
+    0% { filter: brightness(1); transform: scale(1); }
+    50% { filter: brightness(2.5) drop-shadow(0 0 30px #FFD700); transform: scale(1.2); }
+    100% { filter: brightness(1); transform: scale(1); }
+  }
+
+  /* 击杀消失（缩小+淡出+转黑） */
+  .combatant.dying .combatant-sprite {
+    animation: dieOut 0.8s ease-in forwards;
+  }
+  @keyframes dieOut {
+    0% { opacity: 1; transform: scale(1); filter: brightness(1); }
+    50% { opacity: 0.6; transform: scale(1.1) rotate(5deg); filter: grayscale(1) brightness(0.5); }
+    100% { opacity: 0; transform: scale(0.2) rotate(45deg); filter: grayscale(1); }
+  }
+
+  /* 暴击标记 */
+  .crit-mark {
+    position: absolute; left: 50%; top: 10%;
+    transform: translateX(-50%) rotate(-15deg);
+    font-size: 22px; font-weight: 900;
+    color: #FFD700; pointer-events: none; z-index: 201;
+    text-shadow: 0 0 10px #FF4D4F, 2px 2px 0 #000;
+    animation: critPop 0.6s ease-out forwards;
+  }
+  @keyframes critPop {
+    0% { opacity: 0; transform: translateX(-50%) rotate(-15deg) scale(0.2); }
+    30% { opacity: 1; transform: translateX(-50%) rotate(-15deg) scale(1.5); }
+    100% { opacity: 0; transform: translateX(-50%) rotate(-15deg) scale(1) translateY(-30px); }
+  }
+
+  /* ========== 个人中心 ========== */
+  .profile-btn {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    width: 42px; height: 42px; border-radius: 50%;
+    background: rgba(22,119,255,0.15);
+    border: 2px solid #1677FF; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.25s;
+    box-shadow: 0 0 8px rgba(22,119,255,0.3);
+    z-index: 10;
+  }
+  .profile-btn:hover { background: rgba(22,119,255,0.3); box-shadow: 0 0 15px rgba(22,119,255,0.6); transform: translateY(-50%) scale(1.08); }
+  .profile-avatar { font-size: 22px; line-height: 1; }
+
+  /* 个人中心 Modal */
+  .profile-modal {
+    position: fixed; inset: 0; background: rgba(0,8,20,0.85); backdrop-filter: blur(6px);
+    z-index: 10000; display: flex; align-items: center; justify-content: center;
+    animation: modalIn 0.25s ease-out;
+  }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+  .profile-card {
+    background: linear-gradient(135deg, #0B1220, #162A4A);
+    border: 1px solid #1677FF; border-radius: 14px;
+    width: 460px; max-height: 85vh; overflow-y: auto;
+    box-shadow: 0 0 40px rgba(22,119,255,0.4);
+  }
+  .profile-card::-webkit-scrollbar { width: 6px; }
+  .profile-card::-webkit-scrollbar-thumb { background: #1677FF; border-radius: 3px; }
+
+  .profile-head {
+    padding: 24px; text-align: center; position: relative;
+    border-bottom: 1px solid rgba(22,119,255,0.3);
+  }
+  .profile-head .big-avatar {
+    font-size: 64px; display: block; margin-bottom: 8px;
+    filter: drop-shadow(0 0 20px #1677FF);
+    animation: avatarFloat 2.5s ease-in-out infinite;
+  }
+  @keyframes avatarFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  .profile-head .realm-title {
+    color: #1677FF; font-size: 20px; font-weight: 700; margin-bottom: 4px;
+  }
+  .profile-head .sub { color: #8B9CB8; font-size: 12px; }
+  .profile-head .close-x {
+    position: absolute; right: 10px; top: 10px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: transparent; border: 1px solid #4A5A78;
+    color: #8B9CB8; cursor: pointer; font-size: 14px;
+    transition: all 0.2s;
+  }
+  .profile-head .close-x:hover { background: #FF4D4F; color: #fff; border-color: #FF4D4F; }
+
+  .profile-section { padding: 16px 24px; border-bottom: 1px solid rgba(22,119,255,0.15); }
+  .profile-section:last-child { border-bottom: none; }
+  .profile-section h4 {
+    color: #1677FF; font-size: 13px; margin-bottom: 12px;
+    padding-bottom: 6px; border-bottom: 1px dashed rgba(22,119,255,0.3);
+  }
+
+  .attr-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 16px;
+  }
+  .attr-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 10px; background: rgba(22,119,255,0.08);
+    border-radius: 6px; font-size: 13px;
+  }
+  .attr-row .label { color: #8B9CB8; }
+  .attr-row .val { color: #fff; font-weight: 700; font-family: Consolas, monospace; }
+  .attr-row .val.red { color: #FF7875; }
+  .attr-row .val.blue { color: #69B1FF; }
+  .attr-row .val.gold { color: #FAAD14; }
+
+  /* 设置滑块 */
+  .setting-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px; background: rgba(22,119,255,0.08); border-radius: 8px; margin-bottom: 8px;
+  }
+  .setting-row:last-child { margin-bottom: 0; }
+  .setting-row .sl { color: #8B9CB8; font-size: 13px; }
+  .setting-row .sv { color: #fff; font-size: 13px; font-family: Consolas, monospace; }
+  .vol-slider {
+    -webkit-appearance: none; appearance: none;
+    width: 120px; height: 4px; background: #4A5A78; border-radius: 2px;
+    outline: none;
+  }
+  .vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #1677FF; cursor: pointer; box-shadow: 0 0 8px #1677FF;
+  }
+  .vol-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #1677FF; cursor: pointer; border: none; }
+
+  /* 开关按钮 */
+  .toggle-btn {
+    padding: 4px 12px; border-radius: 12px; border: 1px solid #4A5A78;
+    background: transparent; color: #8B9CB8; cursor: pointer; font-size: 12px;
+    transition: all 0.2s;
+  }
+  .toggle-btn.on { background: #1677FF; border-color: #1677FF; color: #fff; }
+
+  /* 统计卡片 */
+  .stat-mini {
+    display: flex; justify-content: space-between; font-size: 12px;
+    padding: 4px 0; border-bottom: 1px dotted rgba(139,156,184,0.2);
+  }
+  .stat-mini:last-child { border-bottom: none; }
+  .stat-mini .sl { color: #8B9CB8; }
+  .stat-mini .sv { color: #FAAD14; font-family: Consolas, monospace; font-weight: 600; }
+
+  .btn-danger {
+    width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #FF4D4F;
+    background: rgba(255,77,79,0.1); color: #FF7875; cursor: pointer;
+    font-size: 13px; margin-top: 8px; transition: all 0.2s;
+  }
+  .btn-danger:hover { background: rgba(255,77,79,0.25); }
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 顶部状态栏 -->
+  <div class="header">
+    <div class="title">▓▓▓ 赛 博 修 仙 · v2.0 ▓▓▓</div>
+    <div class="realm-badge" id="realmBadge">[ 炼气 · 初阶 ]</div>
+    <button class="profile-btn" onclick="showProfileModal()" title="个人中心">
+      <span class="profile-avatar" id="profileAvatar">🧙</span>
+    </button>
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-label">▸ 电压 [HP]</div>
+        <div class="stat-bar"><div class="stat-fill fill-hp" id="hpBar" style="width:100%"></div></div>
+        <div id="hpText" style="font-size:10px;color:#FF7875">100 / 100 V</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">▸ 电流 [MP]</div>
+        <div class="stat-bar"><div class="stat-fill fill-mp" id="mpBar" style="width:100%"></div></div>
+        <div id="mpText" style="font-size:10px;color:#69B1FF">50 / 50 A</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">▸ 频率 [EXP]</div>
+        <div class="stat-bar"><div class="stat-fill fill-xp" id="xpBar" style="width:0%"></div></div>
+        <div id="xpText" style="font-size:10px;color:#FAAD14">0 / 100 Hz</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">▸ 灵石 💰</div>
+        <div id="goldText" style="font-size:14px;color:#FAAD14;font-weight:700;margin-top:4px">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导航 -->
+  <div class="nav">
+    <button class="nav-btn active" data-tab="explore">🗺️ 探索</button>
+    <button class="nav-btn" data-tab="battle">⚔️ 战斗</button>
+    <button class="nav-btn" data-tab="craft">🔧 合成</button>
+    <button class="nav-btn" data-tab="skills">✨ 法术</button>
+    <button class="nav-btn" data-tab="bag">🗄️ 仓库</button>
+    <button class="nav-btn" data-tab="shop">🏪 黑市</button>
+    <button class="nav-btn" data-tab="cultivate">🧘 修炼</button>
+  </div>
+
+  <!-- 探索面板 -->
+  <div class="panel" id="panel-explore" data-header="EXPLORE :: 地图探索">
+    <h2>▸ 选择探索区域</h2>
+    <div id="regionList"></div>
+  </div>
+
+  <!-- 战斗面板 -->
+  <div class="panel hidden" id="panel-battle" data-header="BATTLE :: 战斗终端">
+    <h2>▸ 战斗</h2>
+    <div id="battleContent"></div>
+  </div>
+
+  <!-- 合成面板 -->
+  <div class="panel hidden" id="panel-craft" data-header="CRAFT :: 组装台">
+    <h2>▸ 元器件合成</h2>
+    <div id="craftContent"></div>
+  </div>
+
+  <!-- 法术面板 -->
+  <div class="panel hidden" id="panel-skills" data-header="SKILLS :: 法术库">
+    <h2>▸ 已加载法术</h2>
+    <div id="skillList"></div>
+  </div>
+
+  <!-- 仓库面板 -->
+  <div class="panel hidden" id="panel-bag" data-header="STORAGE :: 修仙仓库">
+    <div class="bag-tabs">
+      <button class="bag-tab active" onclick="switchBagTab('comp')">🔩 元器件</button>
+      <button class="bag-tab" onclick="switchBagTab('item')">🎒 物品装备</button>
+    </div>
+    <div id="bagContent"></div>
+  </div>
+
+  <!-- 黑市面板 -->
+  <div class="panel hidden" id="panel-shop" data-header="BLACK MARKET :: 黑市商人">
+    <h2>▸ 黑市商人</h2>
+    <div id="shopContent"></div>
+  </div>
+
+  <!-- 修炼面板 -->
+  <div class="panel hidden" id="panel-cultivate" data-header="MEDITATION :: 闭关修炼">
+    <h2>▸ 闭关修炼</h2>
+    <div id="cultivateContent"></div>
+  </div>
+
+</div>
+
+<script>
+// ========== 游戏数据 ==========
+
+// 境界专属玩家精灵（等级越高越酷）
+const PLAYER_SPRITES = [
+  '🧙',    // 炼气 · 学徒
+  '🧝',    // 筑基 · 仙子
+  '🧘‍♂️',  // 金丹 · 真人
+  '😈',    // 元婴 · 魔王
+  '👻',    // 化神 · 魂仙
+  '🤖',    // 炼虚 · 机仙
+  '🦹‍♂️', // 合体 · 战神
+  '👑',    // 大乘 · 帝君
+  '⚡',    // 渡劫 · 天劫
+  '🌟',    // 飞升 · 仙尊
+];
+
+const REALMS = [
+  { name: '炼气', stages: ['初阶','中阶','后阶','大圆满'] },
+  { name: '筑基', stages: ['初阶','中阶','后阶','大圆满'] },
+  { name: '金丹', stages: ['初阶','中阶','后阶','大圆满'] },
+  { name: '元婴', stages: ['初阶','中阶','后阶','大圆满'] },
+  { name: '化神', stages: ['初阶','中阶','后阶','大圆满'] },
+  { name: '炼虚', stages: ['初阶','中阶','后阶','大圆满'] },
+  { name: '合体', stages: ['初阶','中阶','后阶','大圆满'] },
+  { name: '大乘', stages: ['初阶','中阶','后阶','大圆满'] },
+  { name: '渡劫', stages: ['初阶','中阶','后阶','大圆满'] },
+  { name: '飞升', stages: ['之境'] },
+];
+const REALM_BASE_HP = [100, 200, 400, 800, 1500, 3000, 6000, 12000, 25000, 50000];
+const REALM_BASE_ATK = [10, 20, 40, 80, 150, 300, 600, 1200, 2500, 5000];
+const REALM_BASE_DEF = [5, 12, 25, 50, 100, 200, 400, 800, 1500, 3000];
+const XP_PER_LEVEL = [100, 300, 800, 2000, 5000, 12000, 30000, 80000, 200000, 500000];
+
+// 每个小阶 (realmIdx: 0..39, 40+飞升) 对应的头像精灵
+const REALM_SPRITES = [
+  // 炼气 0-3
+  '🧙','🧙','🧙','🧙',
+  // 筑基 4-7
+  '🧝','🧝','🧝','🧝',
+  // 金丹 8-11
+  '🧘‍♂️','🧘‍♂️','🧘‍♂️','🧘‍♂️',
+  // 元婴 12-15
+  '😈','😈','😈','😈',
+  // 化神 16-19
+  '👻','👻','👻','👻',
+  // 炼虚 20-23
+  '🤖','🤖','🤖','🤖',
+  // 合体 24-27
+  '🦹‍♂️','🦹‍♂️','🦹‍♂️','🦹‍♂️',
+  // 大乘 28-31
+  '👑','👑','👑','👑',
+  // 渡劫 32-35
+  '⚡','⚡','⚡','⚡',
+  // 飞升 36+ (之境只有一阶)
+  '🌟','🌟','🌟','🌟'
+];
+const REALMS_DESC = {
+  '炼气': '以凡躯引灵气入体，初窥电子信号之妙',
+  '筑基': '构建电路基底，体内经脉初成回路',
+  '金丹': '凝聚核心运算单元，算力质变',
+  '元婴': '神魂初显，灵智独立于肉身',
+  '化神': '神识外放，可感知千里之外的信号波动',
+  '炼虚': '虚实转换，肉身可化为数据流穿梭网络',
+  '合体': '神魂与肉身完美融合，一人即一超级计算机',
+  '大乘': '窥天道法则，参透赛博宇宙之根本',
+  '渡劫': '九重天劫降下，信号风暴洗礼',
+  '飞升': '突破维度限制，进入赛博仙界'
+};
+// stages 用原始 REALMS.stages，showProfileModal 里直接用
+const _REALM_SUB_NAMES = ['初阶','中阶','后阶','大圆满'];
+
+// ========== 电子元器件 ==========
+const COMPONENTS = {
+  resistor:    { name: '电阻 Resistor',    emoji: '🟫', color: '#8b4513', desc: '基础限流元件，合成必备' },
+  capacitor:   { name: '电容 Capacitor',   emoji: '🔵', color: '#4488ff', desc: '储能元件，恢复类道具用' },
+  diode:       { name: '二极管 Diode',     emoji: '🟨', color: '#ffcc00', desc: '单向导电，法术类消耗' },
+  transistor:  { name: '晶体管 Transistor',emoji: '🟪', color: '#cc66ff', desc: '放大信号，装备升级用' },
+  chip:        { name: '芯片 Chip',        emoji: '🔴', color: '#ff4444', desc: '核心元件，突破境界' },
+  pcb:         { name: 'PCB板 Circuit',    emoji: '🟩', color: '#00cc66', desc: '电路板，合成高级装备' },
+  cpu:         { name: 'CPU处理器',         emoji: '🧠', color: '#ff8800', desc: '顶级元件，超频技能' },
+  ram:         { name: '内存条 RAM',        emoji: '📦', color: '#44ffcc', desc: '存储扩展，灵力加成' },
+  heatsink:    { name: '散热片 Heatsink',   emoji: '❄️', color: '#88ccff', desc: '散热元件，减少过载' },
+  battery:     { name: '电池组 Battery',    emoji: '🔋', color: '#ffff00', desc: '大容量储能' },
+};
+
+// ========== 合成配方 ==========
+const RECIPES = [
+  // 消耗品
+  { id: 'heal_pack',  name: '🧪 纳米修复包', parts: { capacitor: 2, resistor: 3 }, result: { itemId: 'heal_pack', qty: 1 } },
+  { id: 'mp_pack',    name: '🔋 灵力电池',   parts: { capacitor: 3, diode: 2 }, result: { itemId: 'mp_pack', qty: 1 } },
+  { id: 'big_heal',   name: '💉 灵源注入器', parts: { battery: 1, capacitor: 3, diode: 2 }, result: { itemId: 'big_heal', qty: 1 } },
+  { id: 'lucky',      name: '🍀 好运符箓',   parts: { chip: 1, diode: 3 }, result: { itemId: 'lucky_charm', qty: 1 } },
+  { id: 'realm_break',name: '💎 破境丹',     parts: { chip: 2, pcb: 1, transistor: 3 }, result: { itemId: 'realm_break', qty: 1 } },
+  // 武器
+  { id: 'sword1',     name: '🗡️ 数据刃·初', parts: { pcb: 1, transistor: 2, resistor: 5 }, result: { itemId: 'sword_1', qty: 1 } },
+  { id: 'sword1b',    name: '🔪 电路匕首',   parts: { pcb: 1, transistor: 3, diode: 3 }, result: { itemId: 'sword_1b', qty: 1 } },
+  { id: 'sword2',     name: '⚔️ 灵能长剑',   parts: { pcb: 2, transistor: 5, chip: 1 }, result: { itemId: 'sword_2', qty: 1 } },
+  { id: 'sword2b',    name: '🔫 等离子步枪', parts: { pcb: 2, chip: 1, transistor: 4, capacitor: 3 }, result: { itemId: 'sword_2b', qty: 1 } },
+  { id: 'sword3',     name: '🌙 虚空斩',     parts: { pcb: 3, chip: 2, cpu: 1, transistor: 6 }, result: { itemId: 'sword_3', qty: 1 } },
+  // 护甲
+  { id: 'armor1',     name: '🛡️ 轻量护盾',   parts: { pcb: 1, diode: 3, capacitor: 3 }, result: { itemId: 'armor_1', qty: 1 } },
+  { id: 'armor1b',    name: '🦺 阻流背心',   parts: { pcb: 1, resistor: 4, heatsink: 2 }, result: { itemId: 'armor_1b', qty: 1 } },
+  { id: 'armor2',     name: '🦾 合金护甲',   parts: { pcb: 2, capacitor: 5, chip: 1 }, result: { itemId: 'armor_2', qty: 1 } },
+  { id: 'armor3',     name: '👘 量子圣袍',   parts: { pcb: 3, chip: 2, ram: 2, capacitor: 6 }, result: { itemId: 'armor_3', qty: 1 } },
+  // 饰品
+  { id: 'ring1',      name: '💍 灵石戒指',   parts: { diode: 2, transistor: 1, capacitor: 2 }, result: { itemId: 'ring_1', qty: 1 } },
+  { id: 'ring2',      name: '👁️ 天眼护符',   parts: { ram: 2, chip: 1, pcb: 1 }, result: { itemId: 'ring_2', qty: 1 } },
+  { id: 'ring2b',     name: '🧠 超频芯片',   parts: { cpu: 1, pcb: 1, capacitor: 4 }, result: { itemId: 'ring_2b', qty: 1 } },
+];
+
+// ========== 地图（带ASCII艺术） ==========
+const REGIONS = [
+  { id: 'ruin', name: '废墟街区', color: 'ascii-ruin', minRealm: 0, minStage: 0, enemies: ['ai_scout','glitch_rat','broken_drone'],
+    ascii: '┌──────────────────┐\n│ 🏚️  ▓▓  ░░  🏚️    │\n│ ▓▓░░▓▓  ░░▓▓░░▓▓  │\n│ ═══════════════════│\n│ [信号弱]  AI出没中  │\n└──────────────────┘',
+    desc: '科技崩塌后的城市残骸，游荡着低级失控AI' },
+  { id: 'circuit', name: '电路迷宫', color: 'ascii-circuit', minRealm: 0, minStage: 2, enemies: ['circuit_worm','chip_goblin','fuse_imp'],
+    ascii: '╔══╦══╦══╦══╦══╦══╦══╗\n║  ║  ║  ║  ║  ║  ║  ║\n╠══╬══╬══╬══╬══╬══╬══╣\n║→─╫──╫──╫──╫──╫─←║\n╚══╩══╩══╩══╩══╩══╩══╝',
+    desc: '巨大的PCB板地面，铜箔走线像迷宫' },
+  { id: 'memory', name: '内存墓地', color: 'ascii-memory', minRealm: 1, minStage: 0, enemies: ['ram_ghost','bit_hunter','data_shade'],
+    ascii: '▓█▓█▓█▓█▓█▓█▓█▓█▓█▓█\n█░█░█░█░█░█░█░█░█░█░█\n▓█▓█▓█▓█▓█▓█▓█▓█▓█▓█\n    [内存条堆成山谷]    ',
+    desc: '废弃内存条堆积的山谷，数据残魂游荡' },
+  { id: 'battery_sea', name: '电池之海', color: 'ascii-battery', minRealm: 1, minStage: 2, enemies: ['electro_fish','acid_slime','leech_tank'],
+    ascii: '══════════════════════\n  ~~ ≈≈ ~~ ≈≈ ~~ ≈≈  \n  ╔══╗   ╔══╗   ╔══╗  \n  ║🔋║   ║🔋║   ║🔋║  \n  ╚══╝   ╚══╝   ╚══╝  \n══════════════════════',
+    desc: '液态电池组成的发光海洋，漏电危险' },
+  { id: 'deep_web', name: '深渊网络', color: 'ascii-web', minRealm: 2, minStage: 0, enemies: ['cyber_ghost','virus_spirit','net_demon'],
+    ascii: '🕸️🕸️🕸️🕸️🕸️🕸️🕸️🕸️\n ╲ │ ╱   ╲ │ ╱  \n   ╳       ╳    \n ╱ │ ╲   ╱ │ ╲  \n🕸️🕸️🕸️🕸️🕸️🕸️🕸️🕸️',
+    desc: '被遗忘的网络空间，充满赛博心魔' },
+  { id: 'cpu_core', name: 'CPU核心', color: 'ascii-cpu', minRealm: 3, minStage: 0, enemies: ['overclock_beast','heat_wraith','bios_boss'],
+    ascii: '┌─────────────────┐\n│  ┌───CPU───┐    │\n│  │ ▓█▓█▓█▓█ │    │\n│  │ ▓█▓█▓█▓█ │    │\n│  └─────────┘    │\n│ [危险: 超频中]   │\n└─────────────────┘',
+    desc: '巨大CPU内部，超频掉帧的Boss战' },
+  { id: 'void_station', name: '虚空基站', color: 'ascii-station', minRealm: 4, minStage: 0, enemies: ['void_pirate','cyber_dragon','void_master'],
+    ascii: '    ╱╲    \n   ╱🛰️╲   \n  ╱      ╲  \n ╱═══╗═════╲ \n╱    ║      ╲\n    ▼▼▼',
+    desc: '漂浮在数据流中的终极战场' },
+  { id: 'ascension', name: '飞升之门', color: 'ascii-ascend', minRealm: 5, minStage: 0, enemies: ['ascension_trial','final_demon'],
+    ascii: '      ╱╲\n     ╱══╲\n    ╱    ╲\n   ╱  ☀️  ╲\n  ╱════════╲\n ╱  ║  ║  ║  ╲\n╱══════════════╲',
+    desc: '传说的终点，飞升之境' },
+];
+
+// ========== 电子敌人 ==========
+const ENEMIES = {
+  // 废墟街区
+  ai_scout:   { name: '侦查AI',   hp: 40,  atk: 8,  def: 2,  emoji: '🤖', xp: 20,  gold: [5,15],  drops: { resistor: [1,2] } },
+  glitch_rat: { name: '故障鼠',   hp: 30,  atk: 12, def: 1,  emoji: '🐀', xp: 15,  gold: [3,10],  drops: { resistor: [1,1] } },
+  broken_drone:{name: '破损无人机',hp: 60,  atk: 10, def: 5,  emoji: '🛩️', xp: 25,  gold: [8,20],  drops: { capacitor: [1,2], resistor: [0,1] } },
+  // 电路迷宫
+  circuit_worm:{name: '电路蠕虫', hp: 80,  atk: 18, def: 5,  emoji: '🐛', xp: 40,  gold: [10,25], drops: { resistor: [2,4], diode: [0,1] } },
+  chip_goblin: {name: '芯片哥布林',hp: 100, atk: 22, def: 8,  emoji: '👺', xp: 55,  gold: [15,30], drops: { transistor: [0,1], diode: [1,2] } },
+  fuse_imp:    {name: '熔丝小鬼', hp: 70,  atk: 25, def: 3,  emoji: '🔥', xp: 45,  gold: [10,20], drops: { capacitor: [1,2], heatsink: [0,1] } },
+  // 内存墓地
+  ram_ghost:   {name: '内存幽灵', hp: 150, atk: 30, def: 12, emoji: '👻', xp: 80,  gold: [20,45], drops: { ram: [0,1], capacitor: [1,2] } },
+  bit_hunter:  {name: '比特猎手', hp: 130, atk: 35, def: 10, emoji: '🦇', xp: 75,  gold: [18,40], drops: { transistor: [1,2] } },
+  data_shade:  {name: '数据阴影', hp: 180, atk: 40, def: 15, emoji: '🌑', xp: 100, gold: [25,50], drops: { diode: [2,3], pcb: [0,1] } },
+  // 电池之海
+  electro_fish:{name: '电鳗', hp: 200, atk: 45, def: 12, emoji: '🐟', xp: 110, gold: [30,55], drops: { battery: [0,1], capacitor: [2,3] } },
+  acid_slime:  {name: '酸液史莱姆',hp: 250, atk: 30, def: 25, emoji: '🟢', xp: 120, gold: [25,60], drops: { capacitor: [2,4], heatsink: [1,2] } },
+  leech_tank:  {name: '储油罐蛭', hp: 300, atk: 40, def: 20, emoji: '🪱', xp: 140, gold: [35,70], drops: { battery: [1,2], resistor: [2,3] } },
+  // 深渊网络
+  cyber_ghost: {name: '赛博幽灵', hp: 350, atk: 55, def: 18, emoji: '👻', xp: 160, gold: [40,80], drops: { chip: [0,1], ram: [0,1] } },
+  virus_spirit:{name: '病毒精魂', hp: 300, atk: 65, def: 15, emoji: '🦠', xp: 170, gold: [45,90], drops: { diode: [2,4], transistor: [1,2] } },
+  net_demon:   {name: '网络恶魔', hp: 450, atk: 60, def: 30, emoji: '😈', xp: 220, gold: [55,110], drops: { pcb: [1,2], chip: [0,1] } },
+  // CPU核心
+  overclock_beast:{name: '超频巨兽',hp: 900, atk: 110,def: 55, emoji: '💢', xp: 450, gold: [100,200], drops: { cpu: [0,1], heatsink: [2,3], chip: [1,2] } },
+  heat_wraith: {name: '散热怨灵', hp: 700, atk: 130,def: 40, emoji: '🔥', xp: 500, gold: [120,230], drops: { heatsink: [2,4], transistor: [2,3] } },
+  bios_boss:   {name: 'BIOS守护者',hp: 1200,atk: 100,def: 80, emoji: '💾', xp: 600, gold: [150,280], drops: { chip: [2,3], cpu: [0,1], pcb: [1,2] } },
+  // 虚空基站
+  void_pirate: {name: '虚空海盗', hp: 1600, atk: 200,def: 85, emoji: '🏴‍☠️',xp: 900, gold: [200,400], drops: { cpu: [0,1], pcb: [1,2], chip: [1,2] } },
+  cyber_dragon:{name: '赛博龙',   hp: 2800, atk: 280,def: 130,emoji: '🐉', xp: 1600,gold: [400,700],drops: { cpu: [1,1], chip: [2,3], ram: [1,2] } },
+  void_master: {name: '虚空领主', hp: 3800, atk: 320,def: 160,emoji: '👑', xp: 2200,gold: [500,900],drops: { cpu: [1,2], chip: [2,4], heatsink: [2,3] } },
+  // 飞升之门
+  ascension_trial:{name: '天劫试炼',hp: 22000,atk: 1800,def: 900,emoji: '🌩️', xp: 25000,gold: [5000,8000],drops: { cpu: [3,5], chip: [5,8] } },
+  final_demon:   {name: '终极心魔', hp: 55000,atk: 3200,def: 1600,emoji: '😇', xp: 120000,gold: [20000,30000],drops: { cpu: [5,10], chip: [10,20] } },
+};
+
+// ========== 电子法术 ==========
+const SKILLS = [
+  { id: 'bash',       name: '⚔️ 数据斩',     desc: '发射数据刃攻击敌人',       mpCost: 5,  dmgMul: 1.5, unlockRealm: 0, unlockStage: 0 },
+  { id: 'fireball',   name: '🔥 等离子炮',   desc: '释放等离子能量弹',         mpCost: 15, dmgMul: 2.5, unlockRealm: 0, unlockStage: 2 },
+  { id: 'thunder',    name: '⚡ 电磁脉冲',   desc: '电磁风暴轰击，有概率瘫痪', mpCost: 30, dmgMul: 3.5, unlockRealm: 1, unlockStage: 0, skipEnemyChance: 0.3 },
+  { id: 'heal',       name: '💊 纳米修复',   desc: '启动纳米机器人修复自身',   mpCost: 20, healMul: 1, unlockRealm: 1, unlockStage: 2 },
+  { id: 'overclock',  name: '💢 超频一击',   desc: '超频CPU，伤害×4但自损5%HP',mpCost: 40, dmgMul: 4, selfDmg: 0.05, unlockRealm: 2, unlockStage: 0 },
+  { id: 'firmware',   name: '🔧 固件升级',   desc: '恢复HP/MP并临时+30%攻击',  mpCost: 35, healMul: 0.6, tempAtkMul: 1.3, unlockRealm: 2, unlockStage: 2 },
+  { id: 'void_blast', name: '💫 虚空裂解',   desc: '撕裂虚空造成毁灭性伤害',   mpCost: 60, dmgMul: 6, unlockRealm: 3, unlockStage: 0 },
+  { id: 'signal_jam', name: '📡 信号干扰',   desc: '降低敌人50%命中率3回合',   mpCost: 30, debuffEnemy: { hitChance: 0.5, turns: 3 }, unlockRealm: 3, unlockStage: 2 },
+  { id: 'quantum',    name: '🌊 量子波动',   desc: '释放量子波造成巨大伤害',   mpCost: 100,dmgMul: 10, unlockRealm: 4, unlockStage: 0 },
+  { id: 'fuse_burst', name: '💥 熔断自爆',   desc: '消耗所有MP造成巨大伤害',   mpCost: 999,dmgMul: 15, unlockRealm: 4, unlockStage: 2 },
+  { id: 'ascension',  name: '🌟 飞升一击',   desc: '传说级最终一击',           mpCost: 9999,dmgMul: 30,unlockRealm: 5, unlockStage: 0 },
+];
+
+// ========== 物品（保留旧物品但加更多电子风格） ==========
+const ITEMS = {
+  // 消耗品
+  heal_pack:   { emoji:'🧪', name: '🧪 纳米修复包', desc: '恢复40%电压[HP]', type: 'consumable', rarity: 'common', healPercent: 0.4, price: 50 },
+  big_heal:    { emoji:'💉', name: '💉 灵源注入器', desc: '恢复全部电压[HP]', type: 'consumable', rarity: 'rare', healPercent: 1, price: 300 },
+  mp_pack:     { emoji:'🔋', name: '🔋 灵力电池',   desc: '恢复50%电流[MP]', type: 'consumable', rarity: 'common', mpPercent: 0.5, price: 40 },
+  realm_break: { emoji:'💎', name: '💎 破境丹',     desc: '帮助突破境界',       type: 'consumable', rarity: 'epic', breakChance: 1, price: 2000 },
+  lucky_charm: { emoji:'🍀', name: '🍀 好运符箓',   desc: '下一场战斗双倍奖励', type: 'consumable', rarity: 'rare', lucky: true, price: 200 },
+  // 武器 (6种)
+  sword_1: { emoji:'🗡️', name: '🗡️ 数据刃·初',   desc: '攻击+15',  type: 'weapon', rarity: 'common', atkBonus: 15,  price: 150 },
+  sword_1b:{ emoji:'🔪', name: '🔪 电路匕首',     desc: '攻击+25, 暴击+5%', type: 'weapon', rarity: 'common', atkBonus: 25, critBonus: 0.05, price: 200 },
+  sword_2: { emoji:'⚔️', name: '⚔️ 灵能长剑',     desc: '攻击+50',  type: 'weapon', rarity: 'rare',   atkBonus: 50,  price: 800 },
+  sword_2b:{ emoji:'🔫', name: '🔫 等离子步枪',   desc: '攻击+60, 攻击范围+10%', type: 'weapon', rarity: 'rare', atkBonus: 60, price: 1200 },
+  sword_3: { emoji:'🌙', name: '🌙 虚空斩',       desc: '攻击+200', type: 'weapon', rarity: 'epic',   atkBonus: 200, price: 3000 },
+  sword_4: { emoji:'🌈', name: '🌈 飞升之剑',     desc: '攻击+800', type: 'weapon', rarity: 'legend', atkBonus: 800, price: 20000 },
+  // 护甲 (5种)
+  armor_1: { emoji:'🛡️', name: '🛡️ 轻量护盾',     desc: '防御+10, 生命+50',   type: 'armor', rarity: 'common', defBonus: 10, hpBonus: 50,   price: 120 },
+  armor_1b:{ emoji:'🦺', name: '🦺 阻流背心',     desc: '防御+20, 减伤5%',   type: 'armor', rarity: 'common', defBonus: 20, dmgReduce: 0.05, price: 180 },
+  armor_2: { emoji:'🦾', name: '🦾 合金护甲',     desc: '防御+40, 生命+200', type: 'armor', rarity: 'rare',   defBonus: 40, hpBonus: 200,  price: 600 },
+  armor_3: { emoji:'👘', name: '👘 量子圣袍',     desc: '防御+150, 生命+800',type: 'armor', rarity: 'epic',   defBonus: 150,hpBonus: 800,  price: 2500 },
+  armor_4: { emoji:'✨', name: '✨ 飞升法衣',     desc: '防御+500, 生命+3000',type:'armor', rarity:'legend', defBonus: 500,hpBonus: 3000,price: 15000 },
+  // 饰品 (4种)
+  ring_1:  { emoji:'💍', name: '💍 灵石戒指',     desc: '灵石获取+20%',      type: 'accessory', rarity: 'common', goldBonus: 0.2, price: 200 },
+  ring_2:  { emoji:'👁️', name: '👁️ 天眼护符',     desc: '战斗经验+30%',      type: 'accessory', rarity: 'rare',   xpBonus: 0.3,  price: 800 },
+  ring_2b: { emoji:'🧠', name: '🧠 超频芯片',     desc: 'MP上限+20%',        type: 'accessory', rarity: 'rare',   mpBonus: 0.2,  price: 900 },
+  ring_3:  { emoji:'💖', name: '💖 道祖之心',     desc: '全属性+5%',         type: 'accessory', rarity: 'legend', allBonus: 0.05,price: 10000 },
+};
+
+// ========== 事件 ==========
+const EVENTS = [
+  { id: 'merchant', title: '黑市商人', ascii: '  ╔═══════════╗\n  ║  🧔 💰     ║\n  ╚═══════════╝',
+    desc: '你遇到一个黑市商人，他愿意低价出售物品。', choices: [
+      { text: '买好运符箓 (200灵石)', action: 'buy_event', item: 'lucky_charm', cost: 200 },
+      { text: '离开', action: 'leave' }
+  ]},
+  { id: 'treasure', title: '发现宝箱', ascii: '  ┌─────────┐\n  │ 📦 ▓▓▓▓ │\n  └─────────┘',
+    desc: '你发现一个数据加密的工具箱！', choices: [
+      { text: '打开', action: 'get_item', items: ['heal_pack','mp_pack'], components: { resistor: [2,4], capacitor: [1,3], diode: [0,2] }, gold: 80 },
+      { text: '离开', action: 'leave' }
+  ]},
+  { id: 'parts', title: '电子垃圾堆', ascii: '  ▓▓▓▓▓▓▓▓▓▓\n  ║🔋║🟫║🔵║🟨║\n  ▓▓▓▓▓▓▓▓▓▓',
+    desc: '一堆废弃的电子元件，或许能拆解出有用的东西。', choices: [
+      { text: '仔细拆解', action: 'get_components', comps: { resistor: [3,6], capacitor: [1,4], diode: [1,3], transistor: [0,2] } },
+      { text: '粗略翻找', action: 'get_components', comps: { resistor: [1,3] } }
+  ]},
+  { id: 'trap', title: '触发防御系统！', ascii: '  ╔═ ERROR ═══╗\n  ║ !! 警告 !! ║\n  ║ 系统故障   ║\n  ╚═══════════╝',
+    desc: '你触发了古老的电路防御系统，电火花四溅！', choices: [
+      { text: '硬抗 (25%HP伤害)', action: 'damage_event', damagePercent: 0.25 },
+      { text: '短路逃跑 (10%HP)', action: 'flee_event', hpCost: 0.1 }
+  ]},
+  { id: 'hermit', title: '道友点化', ascii: '  ╱╲\n ╱🧙╲\n╱═══╲',
+    desc: '一位前辈路过，为你指点修行迷津！', choices: [
+      { text: '接受传承', action: 'xp_event', xpGain: 200 },
+      { text: '礼貌拒绝', action: 'leave' }
+  ]},
+  { id: 'fountain', title: '灵泉', ascii: '  ╔═══╗\n  ║ 🌊 ║\n  ╚═══╝',
+    desc: '你发现一处闪烁蓝光的液态灵泉。', choices: [
+      { text: '饮用 (完全恢复)', action: 'heal_event' },
+      { text: '带走样品 (获得电池)', action: 'get_components', comps: { battery: [1,1], capacitor: [2,4] } }
+  ]},
+  { id: 'ambush', title: '遭遇埋伏！', ascii: '  ╔═══════════╗\n  ║ ⚠ 包围 ⚠ ║\n  ╚═══════════╝',
+    desc: '一群失控机械从四面八方包围了你！', choices: [
+      { text: '迎战！', action: 'battle_event', enemyScale: 1.3 },
+      { text: '突围 (20%HP)', action: 'flee_event', hpCost: 0.2 }
+  ]},
+  { id: 'chamber', title: '神秘闭关舱', ascii: '  ┌───────┐\n  │ 🛏️ ▓▓ │\n  └───────┘',
+    desc: '发现一个古老的闭关舱，有灵气逸出。', choices: [
+      { text: '进入修炼', action: 'cultivate_event', xpMul: 5 },
+      { text: '离开', action: 'leave' }
+  ]},
+];
+
+// ========== 游戏状态 ==========
+let state = {
+  realmIdx: 0, stageIdx: 0,
+  hp: 100, maxHp: 100,
+  mp: 50, maxMp: 50,
+  atk: 10, def: 5,
+  xp: 0, gold: 100,
+  bag: { heal_pack: 2, mp_pack: 2 },
+  components: { resistor: 5, capacitor: 3 },
+  equipped: { weapon: null, armor: null, accessory: null },
+  learnedSkills: ['bash'],
+  luckyNextBattle: false,
+  currentRegion: null,
+  inBattle: false,
+  battleState: null,
+  // buffs
+  tempAtkMul: 1,
+  enemyDebuffs: { hitChance: 1, turns: 0 },
+  stats: { battlesWon: 0, battlesLost: 0, goldEarned: 0, realmBreaks: 0, componentsFound: 0 },
+};
+
+// ========== 存档 ==========
+function saveGame() { try { localStorage.setItem('cyber_xiuxian_v2', JSON.stringify(state)); } catch(e) {} }
+function loadGame() {
+  try {
+    const saved = localStorage.getItem('cyber_xiuxian_v2');
+    if (saved) { state = { ...state, ...JSON.parse(saved) }; recalcStats(); return true; }
+  } catch(e) {}
+  return false;
+}
+
+// ========== 属性计算 ==========
+function recalcStats() {
+  const rIdx = Math.floor(state.realmIdx / 4);
+  const sIdx = state.realmIdx % 4;
+  const stageMul = 1 + sIdx * 0.25;
+  let baseMaxHp = Math.floor(REALM_BASE_HP[rIdx] * stageMul);
+  let baseAtk = Math.floor(REALM_BASE_ATK[rIdx] * stageMul);
+  let baseDef = Math.floor(REALM_BASE_DEF[rIdx] * stageMul);
+  let hpBonus = 0, atkBonus = 0, defBonus = 0;
+  let goldBonus = 0, xpBonus = 0, allBonus = 0;
+  for (const slot of ['weapon','armor','accessory']) {
+    const item = ITEMS[state.equipped[slot]];
+    if (item) {
+      hpBonus += item.hpBonus || 0; atkBonus += item.atkBonus || 0;
+      defBonus += item.defBonus || 0;
+      goldBonus += item.goldBonus || 0; xpBonus += item.xpBonus || 0;
+      allBonus += item.allBonus || 0;
+    }
+  }
+  state.maxHp = Math.floor((baseMaxHp + hpBonus) * (1 + allBonus));
+  state.atk = Math.floor((baseAtk + atkBonus) * (1 + allBonus));
+  state.def = Math.floor((baseDef + defBonus) * (1 + allBonus));
+  state.maxMp = Math.floor(state.maxHp * 0.5);
+  state.hp = Math.min(state.hp || state.maxHp, state.maxHp);
+  state.mp = Math.min(state.mp || state.maxMp, state.maxMp);
+  state.goldBonus = goldBonus + allBonus;
+  state.xpBonus = xpBonus + allBonus;
+}
+
+function getRealmName() {
+  const rIdx = Math.floor(state.realmIdx / 4);
+  const sIdx = state.realmIdx % 4;
+  if (rIdx >= REALMS.length - 1) return REALMS[rIdx].name;
+  return REALMS[rIdx].name + ' · ' + REALMS[rIdx].stages[sIdx];
+}
+
+function getXpNeeded() {
+  const rIdx = Math.floor(state.realmIdx / 4);
+  const sIdx = state.realmIdx % 4;
+  return Math.floor(XP_PER_LEVEL[rIdx] * (1 + sIdx * 0.5));
+}
+
+function gainXp(amount) {
+  state.xp += amount;
+  const need = getXpNeeded();
+  let broke = false;
+  while (state.xp >= need && state.realmIdx < REALMS.length * 4 - 1) {
+    state.xp -= need;
+    state.realmIdx++; broke = true;
+    state.stats.realmBreaks++;
+    recalcStats();
+    playSFX('levelup');
+    for (const sk of SKILLS) {
+      const skIdx = sk.unlockRealm * 4 + sk.unlockStage;
+      if (state.realmIdx >= skIdx && !state.learnedSkills.includes(sk.id)) {
+        state.learnedSkills.push(sk.id);
+        showToast('>>> 解锁法术: ' + sk.name);
+      }
+    }
+  }
+  if (broke) {
+    showToast('>>> 境界提升! ' + getRealmName());
+    state.hp = state.maxHp; state.mp = state.maxMp;
+  }
+}
+
+// ========== 元器件掉落 ==========
+function dropComponents(enemy) {
+  if (!enemy.drops) return {};
+  const result = {};
+  for (const [comp, range] of Object.entries(enemy.drops)) {
+    const min = range[0], max = range[1];
+    const rnd = Math.floor(Math.random() * (max - min + 1)) + min;
+    if (rnd > 0) result[comp] = rnd;
+  }
+  return result;
+}
+
+// ========== UI 渲染 ==========
+function $(id) { return document.getElementById(id); }
+
+function updateHeader() {
+  recalcStats();
+  const rIdx = Math.floor(state.realmIdx / 4);
+  const badge = $('realmBadge');
+  badge.textContent = '[ ' + getRealmName() + ' ]';
+  badge.dataset.realm = rIdx;
+  $('hpBar').style.width = (state.hp / state.maxHp * 100) + '%';
+  $('hpText').textContent = state.hp + ' / ' + state.maxHp + ' V';
+  $('mpBar').style.width = (state.mp / state.maxMp * 100) + '%';
+  $('mpText').textContent = state.mp + ' / ' + state.maxMp + ' A';
+  const xpNeed = getXpNeeded();
+  $('xpBar').style.width = (state.xp / xpNeed * 100) + '%';
+  $('xpText').textContent = state.xp + ' / ' + xpNeed + ' Hz';
+  $('goldText').textContent = state.gold;
+  // 同步顶部个人中心头像
+  const pa = document.getElementById('profileAvatar');
+  if (pa) pa.textContent = REALM_SPRITES[state.realmIdx] || '🧙';
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+function showHitEffect(text, color, x, y) {
+  const el = document.createElement('div');
+  el.className = 'hit-effect';
+  el.textContent = text;
+  el.style.color = color;
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 600);
+}
+
+// ========== 标签切换 ==========
+function switchTab(tab) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  ['explore','battle','craft','skills','bag','shop','cultivate'].forEach(p => {
+    $('panel-' + p).classList.toggle('hidden', p !== tab);
+  });
+  if (tab === 'explore') renderRegions();
+  if (tab === 'craft') renderCraft();
+  if (tab === 'skills') renderSkills();
+  if (tab === 'bag') renderBag();
+  if (tab === 'shop') renderShop();
+  if (tab === 'cultivate') renderCultivate();
+  if (tab === 'battle') renderBattlePanel();
+}
+document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+
+// ========== 地图 ==========
+function renderRegions() {
+  const list = $('regionList');
+  const realmNames = ['炼气','筑基','金丹','元婴','化神','炼虚','合体','大乘','渡劫','飞升'];
+  let html = '<div class="region-grid">';
+  REGIONS.forEach((region, idx) => {
+    const rIdx = Math.floor(state.realmIdx / 4);
+    const sIdx = state.realmIdx % 4;
+    const unlocked = rIdx > region.minRealm || (rIdx === region.minRealm && sIdx >= region.minStage);
+    html += `<div class="region-card ${unlocked?'':'locked'}" data-idx="${idx}">
+      <div class="region-ascii ${region.color}">${region.ascii}</div>
+      <div class="region-info">
+        <div class="region-name">▸ ${region.name}</div>
+        <div class="region-desc">${region.desc}</div>
+        <div class="region-lv">建议境界: ${realmNames[region.minRealm]}${unlocked?'':' 🔒'}</div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  list.innerHTML = html;
+  // 绑定点击
+  list.querySelectorAll('.region-card:not(.locked)').forEach(card => {
+    card.addEventListener('click', () => enterRegion(REGIONS[parseInt(card.dataset.idx)]));
+  });
+}
+
+function enterRegion(region) {
+  state.currentRegion = region;
+  const rand = Math.random();
+  if (rand < 0.7) startBattle(region);
+  else triggerEvent();
+}
+
+// ========== 战斗 ==========
+function renderBattlePanel() {
+  const content = $('battleContent');
+  if (!state.inBattle) { content.innerHTML = '<div class="empty-hint">战斗终端待机中... 请先去探索地图</div>'; return; }
+  const bs = state.battleState;
+  const enemy = bs.enemy;
+  const realmIdx = Math.floor(state.realmIdx / 4);
+  const playerSprite = PLAYER_SPRITES[realmIdx];
+  content.innerHTML = `
+    <div class="battle-arena">
+      <div class="combatant player realm-${realmIdx}">
+        <div class="combatant-sprite">${playerSprite}</div>
+        <div class="combatant-name">▸ ${getRealmName()}</div>
+        <div class="stat-bar"><div class="stat-fill fill-hp" style="width:${state.hp/state.maxHp*100}%"></div></div>
+        <div style="font-size:10px;color:#ff8060;margin-top:2px">${state.hp}/${state.maxHp}</div>
+        <div class="stat-bar" style="margin-top:3px"><div class="stat-fill fill-mp" style="width:${state.mp/state.maxMp*100}%"></div></div>
+        <div style="font-size:10px;color:#60c0ff;margin-top:2px">${state.mp}/${state.maxMp}</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="combatant enemy">
+        <div class="combatant-sprite">${enemy.emoji}</div>
+        <div class="combatant-name">▸ ${enemy.name}</div>
+        <div class="stat-bar"><div class="stat-fill fill-hp" style="width:${enemy.currentHp/enemy.maxHp*100}%"></div></div>
+        <div style="font-size:10px;color:#ff8060;margin-top:2px">${enemy.currentHp}/${enemy.maxHp}</div>
+      </div>
+    </div>
+    <div class="battle-log" id="battleLog">${bs.logs.map(l => `<p class="log-${l.type}">> ${l.text}</p>`).join('')}</div>
+    <div class="battle-actions">
+      <button class="btn btn-danger" onclick="battleAction('attack')">⚔️ ATTACK</button>
+      <button class="btn btn-info" onclick="showSkillMenu()">✨ SKILLS</button>
+      <button class="btn btn-success" onclick="showBattleItemMenu()">📦 ITEMS</button>
+      <button class="btn" onclick="battleAction('flee')" style="border-color:#888;color:#888">🏃 FLEE</button>
+    </div>
+    <div id="skillMenu" class="hidden" style="margin-top:10px"></div>
+    <div id="itemMenu" class="hidden" style="margin-top:10px"></div>
+  `;
+  $('battleLog').scrollTop = $('battleLog').scrollHeight;
+}
+
+function startBattle(region, enemyScale = 1) {
+  const enemyKey = region.enemies[Math.floor(Math.random() * region.enemies.length)];
+  const baseEnemy = ENEMIES[enemyKey];
+  const rIdx = Math.floor(state.realmIdx / 4);
+  const scale = 1 + rIdx * 0.2;
+  const enemy = {
+    ...baseEnemy,
+    hp: Math.floor(baseEnemy.hp * scale * enemyScale),
+    maxHp: Math.floor(baseEnemy.hp * scale * enemyScale),
+    atk: Math.floor(baseEnemy.atk * scale * enemyScale),
+    def: Math.floor(baseEnemy.def * scale * enemyScale),
+    currentHp: Math.floor(baseEnemy.hp * scale * enemyScale),
+  };
+  state.inBattle = true;
+  state.tempAtkMul = 1;
+  state.enemyDebuffs = { hitChance: 1, turns: 0 };
+  state.battleState = { enemy, logs: [{ type: 'info', text: `遭遇 ${enemy.name}!` }] };
+  switchTab('battle');
+}
+
+function pushLog(type, text) { state.battleState.logs.push({ type, text }); }
+
+function battleAction(action, skillId = null, itemId = null) {
+  if (!state.inBattle) return;
+  const bs = state.battleState, enemy = bs.enemy;
+
+  if (action === 'flee') {
+    if (Math.random() < 0.5) { playSFX('flee'); pushLog('info', '成功短路逃跑!'); endBattle(false); }
+    else { playSFX('warn'); pushLog('dmg', '逃跑失败!'); enemyTurn(); }
+    updateBattleUI(); return;
+  }
+
+  let skipEnemyTurn = false;
+
+  if (action === 'attack') {
+    const atkMul = state.tempAtkMul;
+    const baseAtk = state.atk * atkMul;
+    const isCrit = Math.random() < 0.12;
+    const critMul = isCrit ? 1.8 : 1;
+    const dmg = Math.max(1, Math.floor(baseAtk * critMul - enemy.def * 0.5 + Math.random() * baseAtk * 0.3));
+    enemy.currentHp -= dmg;
+    pushLog('dmg', (isCrit ? '💥 暴击! ' : '') + `你对 ${enemy.name} 造成 ${dmg} 点伤害`);
+    playSFX(isCrit ? 'crit' : 'attack');
+    updateBattleUI();
+    // 先重绘 DOM，再加特效（否则 innerHTML 会清掉 class）
+    chargePlayer();
+    shakeCombatant('enemy');
+    showDamageFloat('-' + dmg, 'normal', 'enemy', isCrit);
+    showSparks(isCrit ? 16 : 10, isCrit ? 'red' : 'gold', 'enemy');
+    if (isCrit) shakeArena();
+  }
+
+  if (action === 'skill' && skillId) {
+    const skill = SKILLS.find(s => s.id === skillId);
+    if (!skill) return;
+    if (state.mp < skill.mpCost) { showToast('电流不足!'); return; }
+    state.mp -= skill.mpCost;
+    pushLog('skill', `>> 发动 [${skill.name}]!`);
+    playSFX('skill');
+
+    if (skill.healMul) {
+      const heal = Math.floor(state.maxHp * skill.healMul * (0.8 + Math.random() * 0.4));
+      state.hp = Math.min(state.maxHp, state.hp + heal);
+      pushLog('heal', `恢复 ${heal} 点电压`);
+      playSFX('heal');
+    }
+    if (skill.dmgMul) {
+      const atkMul = state.tempAtkMul;
+      const baseAtk = state.atk * skill.dmgMul * atkMul;
+      const isCrit = skill.dmgMul >= 3 || Math.random() < 0.1;
+      const dmg = Math.max(1, Math.floor(baseAtk - enemy.def * 0.3 + Math.random() * baseAtk * 0.2));
+      enemy.currentHp -= dmg;
+      pushLog(isCrit ? 'crit' : 'dmg', (isCrit ? '💥 暴击! ' : '') + `${enemy.name} 受到 ${dmg} 点伤害`);
+    }
+    if (skill.selfDmg) {
+      const selfD = Math.floor(state.maxHp * skill.selfDmg);
+      state.hp -= selfD;
+      pushLog('dmg', `超频反冲! 自损 ${selfD} HP`);
+    }
+    if (skill.tempAtkMul) {
+      state.tempAtkMul = skill.tempAtkMul;
+      setTimeout(() => { state.tempAtkMul = 1; showToast('>> 固件升级效果结束'); }, 6000);
+      pushLog('info', '攻击临时提升 30%!');
+    }
+    if (skill.debuffEnemy) {
+      state.enemyDebuffs = { hitChance: skill.debuffEnemy.hitChance, turns: skill.debuffEnemy.turns };
+      pushLog('info', `${enemy.name} 命中率降低!`);
+      skipEnemyTurn = true;
+    }
+    if (skill.skipEnemyChance && Math.random() < skill.skipEnemyChance) {
+      pushLog('info', `${enemy.name} 被电磁瘫痪!`);
+      skipEnemyTurn = true;
+    }
+    updateBattleUI();
+    // 后加特效
+    chargePlayer();
+    shakeArena();
+    showDamageFloat('-' + skill.mpCost + ' A', 'mp', 'player');
+    if (skill.healMul) {
+      showDamageFloat('+' + Math.floor(state.maxHp * skill.healMul * 0.9), 'heal', 'player');
+      showSparks(12, 'gold', 'player');
+      showBlast('blue', 'player');
+    }
+    if (skill.dmgMul) {
+      const isCrit = skill.dmgMul >= 3;
+      showDamageFloat('-' + (Math.floor(state.atk * skill.dmgMul * state.tempAtkMul - enemy.def * 0.3)), 'spell', 'enemy', isCrit);
+      showSparks(skill.dmgMul >= 2 ? 18 : 12, 'blue', 'enemy');
+      showBlast('blue', 'enemy');
+      shakeCombatant('enemy');
+      if (isCrit || skill.dmgMul >= 3) shakeArena();
+    }
+    if (skill.selfDmg) {
+      showDamageFloat('-' + Math.floor(state.maxHp * skill.selfDmg), 'normal', 'player');
+      shakeCombatant('player');
+    }
+  }
+
+  if (action === 'item' && itemId) {
+    const item = ITEMS[itemId];
+    if (!item || !state.bag[itemId] || state.bag[itemId] <= 0) return;
+    state.bag[itemId]--;
+    pushLog('info', `使用 ${item.name}`);
+    if (item.healPercent) { playSFX('heal'); const heal = Math.floor(state.maxHp * item.healPercent); state.hp = Math.min(state.maxHp, state.hp + heal); pushLog('heal', `恢复 ${heal} HP`); }
+    if (item.mpPercent) { const mp = Math.floor(state.maxMp * item.mpPercent); state.mp = Math.min(state.maxMp, state.mp + mp); pushLog('heal', `恢复 ${mp} MP`); }
+    if (item.lucky) { state.luckyNextBattle = true; showToast('>> 好运符箓激活!'); }
+    updateBattleUI();
+    if (item.healPercent) showDamageFloat('+' + Math.floor(state.maxHp * item.healPercent), 'heal', 'player');
+    if (item.mpPercent) showDamageFloat('+' + Math.floor(state.maxMp * item.mpPercent), 'mp', 'player');
+    return;
+  }
+
+  if (enemy.currentHp <= 0) {
+    enemy.currentHp = 0;
+    pushLog('info', `>> ${enemy.name} 被击败!`);
+    playSFX('death');
+    updateBattleUI();
+    killEnemy();
+    setTimeout(() => endBattle(true), 800); return;
+  }
+
+  if (!skipEnemyTurn) enemyTurn();
+  else if (state.enemyDebuffs.turns > 0) {
+    state.enemyDebuffs.turns--;
+    if (state.enemyDebuffs.turns <= 0) state.enemyDebuffs = { hitChance: 1, turns: 0 };
+  }
+  updateBattleUI();
+}
+
+function enemyTurn() {
+  const bs = state.battleState, enemy = bs.enemy;
+  // 检查命中率 debuff
+  if (state.enemyDebuffs.hitChance < 1 && Math.random() > state.enemyDebuffs.hitChance) {
+    pushLog('info', `${enemy.name} 攻击被信号干扰, 未命中!`);
+    if (state.enemyDebuffs.turns > 0) { state.enemyDebuffs.turns--; if (state.enemyDebuffs.turns <= 0) state.enemyDebuffs = { hitChance: 1, turns: 0 }; }
+    return;
+  }
+  const dmg = Math.max(1, Math.floor(enemy.atk - state.def * 0.5 + Math.random() * enemy.atk * 0.3));
+  state.hp -= dmg;
+  pushLog('dmg', `${enemy.name} 对你造成 ${dmg} 点伤害`);
+  state.mp = Math.min(state.maxMp, state.mp + 3);
+  playSFX('hit');
+  updateBattleUI();
+  // 后加特效
+  showDamageFloat('-' + dmg, 'normal', 'player');
+  showSparks(10, 'red', 'player');
+  shakeCombatant('player');
+  shakeArena();
+  if (state.hp <= 0) {
+    state.hp = 0;
+    pushLog('dmg', '>> 你被击败了...');
+    killEnemy();
+    const p = document.querySelector('.combatant.player');
+    if (p) { p.classList.add('dying'); showBlast('red', 'player'); }
+    updateBattleUI();
+    setTimeout(() => endBattle(false), 800);
+  }
+}
+
+function updateBattleUI() { updateHeader(); renderBattlePanel(); }
+
+// ========== 战斗特效系统 ==========
+// 特效节点放到 body 上（fixed 定位），战斗场地用 class 动画
+// 注意：所有特效调用必须在 updateBattleUI() 之后，否则 innerHTML 重建会清掉 class
+
+// 特效系统核心：所有 class 动画必须在所有 updateBattleUI() 之后触发
+// 所以用 setTimeout 把特效排到事件循环末尾
+
+function insertEffect(el, ttl = 1000) {
+  document.body.appendChild(el);
+  setTimeout(() => { try { el.remove(); } catch(e) {} }, ttl);
+}
+
+function fxLater(fn) { setTimeout(fn, 50); } // 等事件循环清空后执行
+
+// 飘字伤害数字
+function showDamageFloat(text, type = 'normal', target = 'enemy', isCrit = false) {
+  const combatant = document.querySelector('.combatant.' + target);
+  if (!combatant) return;
+  const rect = combatant.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'dmg-num ' + type + (isCrit ? ' crit' : '');
+  el.textContent = text;
+  el.style.position = 'fixed';
+  el.style.left = (rect.left + rect.width / 2) + 'px';
+  el.style.top = (rect.top + rect.height * 0.15) + 'px';
+  el.style.zIndex = 9999;
+  insertEffect(el, 1000);
+
+  if (isCrit) {
+    const critMark = document.createElement('div');
+    critMark.className = 'crit-mark';
+    critMark.textContent = '💥 CRIT!';
+    critMark.style.position = 'fixed';
+    critMark.style.left = (rect.left + rect.width / 2) + 'px';
+    critMark.style.top = (rect.top - 5) + 'px';
+    critMark.style.zIndex = 9999;
+    insertEffect(critMark, 600);
+  }
+}
+
+// 火花粒子飞散
+function showSparks(count = 10, color = 'gold', target = 'enemy') {
+  const combatant = document.querySelector('.combatant.' + target);
+  if (!combatant) return;
+  const cRect = combatant.getBoundingClientRect();
+  const x = cRect.left + cRect.width / 2;
+  const y = cRect.top + cRect.height / 2;
+  const cls = color === 'red' ? 'spark red' : color === 'blue' ? 'spark blue' : 'spark';
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = cls;
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 30 + Math.random() * 60;
+    el.style.position = 'fixed';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+    el.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+    el.style.width = (4 + Math.random() * 5) + 'px';
+    el.style.height = el.style.width;
+    el.style.zIndex = 9998;
+    insertEffect(el, 500);
+  }
+}
+
+// 爆炸波扩散
+function showBlast(color = 'gold', target = 'enemy') {
+  const combatant = document.querySelector('.combatant.' + target);
+  if (!combatant) return;
+  const cRect = combatant.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'blast ' + (color === 'blue' ? 'blue' : color === 'red' ? 'red' : '');
+  el.style.position = 'fixed';
+  el.style.left = (cRect.left + cRect.width / 2) + 'px';
+  el.style.top = (cRect.top + cRect.height / 2) + 'px';
+  el.style.zIndex = 9997;
+  insertEffect(el, 600);
+}
+
+// 敌人/玩家受击摇晃 + 闪白
+function shakeCombatant(who = 'enemy') {
+  fxLater(() => {
+    const el = document.querySelector('.combatant.' + who);
+    if (!el) return;
+    el.classList.add('shake');
+    setTimeout(() => { if (el.isConnected) el.classList.remove('shake'); }, 300);
+  });
+}
+
+// 战斗场地屏幕震动
+function shakeArena() {
+  fxLater(() => {
+    const arena = document.querySelector('.battle-arena');
+    if (!arena) return;
+    arena.classList.add('shake');
+    setTimeout(() => { if (arena.isConnected) arena.classList.remove('shake'); }, 200);
+  });
+}
+
+// 玩家攻击蓄力发光
+function chargePlayer() {
+  fxLater(() => {
+    const el = document.querySelector('.combatant.player');
+    if (!el) return;
+    el.classList.add('charging');
+    setTimeout(() => { if (el.isConnected) el.classList.remove('charging'); }, 400);
+  });
+}
+
+// 敌人死亡消失
+function killEnemy() {
+  const el = document.querySelector('.combatant.enemy');
+  if (!el) return;
+  el.classList.add('dying');
+  showBlast('red', 'enemy');
+  showSparks(20, 'red', 'enemy');
+  shakeArena();
+}
+
+// 旧的 showHitEffect 别名
+function showHitEffect(text, color) { /* 已废弃 */ }
+
+// ========== 音效系统 · Web Audio API 纯代码合成 ==========
+let _audioCtx = null;
+let _audioMaster = null;  // 主音量 GainNode
+let _audioUnlocked = false;
+
+function getAudio() {
+  if (_audioCtx) return _audioCtx;
+  _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  _audioMaster = _audioCtx.createGain();
+  _audioMaster.gain.value = 0.35;  // 默认音量 35%
+  _audioMaster.connect(_audioCtx.destination);
+  return _audioCtx;
+}
+
+// 用户交互时解锁 AudioContext（浏览器安全策略）
+function unlockAudio() {
+  if (_audioUnlocked) return;
+  _audioUnlocked = true;
+  const ctx = getAudio();
+  if (ctx.state === 'suspended') ctx.resume();
+  // 存 localStorage 避免下次还要点
+  localStorage.setItem('xiuxian_audio_unlocked', '1');
+}
+
+function setAudioMuted(muted) {
+  if (!_audioMaster) getAudio();
+  _audioMaster.gain.value = muted ? 0 : 0.35;
+  localStorage.setItem('xiuxian_muted', muted ? '1' : '0');
+}
+function isAudioMuted() { return localStorage.getItem('xiuxian_muted') === '1'; }
+
+// 核心：创建一个简单音效
+function playTone({ type = 'sine', freq = 440, dur = 0.2, gain = 0.3, sweepTo = null, delay = 0, attack = 0.005, release = 0.05 }) {
+  const ctx = getAudio();
+  const t = ctx.currentTime + delay;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t);
+  if (sweepTo !== null) osc.frequency.exponentialRampToValueAtTime(Math.max(1, sweepTo), t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain, t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur + release);
+  osc.connect(g).connect(_audioMaster);
+  osc.start(t); osc.stop(t + dur + release + 0.02);
+}
+
+// 创建噪声（暴击爆射、受击）
+function playNoise({ dur = 0.15, gain = 0.3, filterFreq = 2000, delay = 0 }) {
+  const ctx = getAudio();
+  const t = ctx.currentTime + delay;
+  // 生成白噪声 buffer
+  const bufSize = Math.floor(ctx.sampleRate * dur);
+  const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+  const src = ctx.createBufferSource(); src.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass'; filter.frequency.value = filterFreq; filter.Q.value = 1;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(filter).connect(g).connect(_audioMaster);
+  src.start(t); src.stop(t + dur + 0.02);
+}
+
+// ========== 具体音效 ==========
+const SFX = {
+  attack() { playTone({ type:'square', freq:800, sweepTo:400, dur:0.08, gain:0.25 }); },
+  crit() {
+    playNoise({ dur:0.15, gain:0.35, filterFreq:3500 });
+    playTone({ type:'sawtooth', freq:200, sweepTo:1200, dur:0.18, gain:0.3, delay:0.03 });
+    playTone({ type:'square', freq:1500, dur:0.08, gain:0.25, delay:0.12 });
+  },
+  skill() { playTone({ type:'sawtooth', freq:300, sweepTo:1400, dur:0.35, gain:0.28 }); },
+  heal() {
+    [523, 659, 784].forEach((f, i) => playTone({ type:'sine', freq:f, dur:0.18, gain:0.25, delay:i*0.07 }));
+  },
+  hit() { playNoise({ dur:0.08, gain:0.25, filterFreq:1500 }); playTone({ type:'triangle', freq:180, sweepTo:80, dur:0.1, gain:0.2, delay:0.02 }); },
+  death() { playNoise({ dur:0.4, gain:0.35, filterFreq:600 }); playTone({ type:'sawtooth', freq:800, sweepTo:60, dur:0.6, gain:0.25, delay:0.05 }); },
+  click() { playTone({ type:'sine', freq:700, dur:0.05, gain:0.2 }); },
+  craft() {
+    [523, 659, 784, 1047].forEach((f, i) => playTone({ type:'sine', freq:f, dur:0.12, gain:0.22, delay:i*0.05 }));
+  },
+  coin() { playTone({ type:'square', freq:880, dur:0.08, gain:0.2 }); playTone({ type:'square', freq:1175, dur:0.08, gain:0.2, delay:0.06 }); },
+  warn() { playTone({ type:'square', freq:150, dur:0.1, gain:0.22 }); playTone({ type:'square', freq:150, dur:0.1, gain:0.22, delay:0.15 }); },
+  levelup() {
+    [392, 494, 587, 784, 988].forEach((f, i) => playTone({ type:'triangle', freq:f, dur:0.15, gain:0.28, delay:i*0.06 }));
+  },
+  flee() { playTone({ type:'sine', freq:500, sweepTo:900, dur:0.25, gain:0.22 }); },
+};
+function playSFX(name) {
+  if (isAudioMuted()) return;
+  if (SFX[name]) SFX[name]();
+}
+// 静音切换（个人中心内部用）
+function toggleSound() {
+  const muted = !isAudioMuted();
+  setAudioMuted(muted);
+  playSFX('click');
+}
+
+// 获取当前主音量（非 muted 时）
+function getMasterVolume() { return _audioMaster ? _audioMaster.gain.value : 0.35; }
+function setMasterVolume(v) {
+  getAudio();
+  _audioMaster.gain.value = v;
+  localStorage.setItem('xiuxian_volume', v.toFixed(2));
+}
+function getSavedVolume() {
+  const v = parseFloat(localStorage.getItem('xiuxian_volume'));
+  return isNaN(v) ? 0.35 : Math.min(1, Math.max(0, v));
+}
+
+// ========== 个人中心 ==========
+function showProfileModal() {
+  if (!state) return;
+  const realm = REALMS[Math.floor(state.realmIdx / 4)];
+  const sub = state.realmIdx % 4;
+  const subName = REALMS[Math.floor(state.realmIdx / 4)]?.stages?.[sub] || '';
+  const avatar = REALM_SPRITES[state.realmIdx] || '🧙';
+  const realmDesc = REALMS_DESC[realm] || '';
+
+  // 更新顶部头像
+  const topAvatar = document.getElementById('profileAvatar');
+  if (topAvatar) topAvatar.textContent = avatar;
+
+  // 读取音量
+  const vol = isAudioMuted() ? 0 : Math.round(getSavedVolume() * 100);
+  const effectsOn = localStorage.getItem('xiuxian_effects') !== '0'; // 默认开
+
+  const stats = state.stats || { battlesWon: 0, battlesLost: 0, goldEarned: 0, realmBreaks: 0, componentsFound: 0 };
+
+  const modalHTML = `
+    <div class="profile-modal" onclick="if(event.target===this) closeProfileModal()">
+      <div class="profile-card">
+        <div class="profile-head">
+          <button class="close-x" onclick="closeProfileModal()">✕</button>
+          <span class="big-avatar">${avatar}</span>
+          <div class="realm-title">${realm} · ${subName}</div>
+          <div class="sub">${realmDesc}</div>
+        </div>
+
+        <div class="profile-section">
+          <h4>📊 属性面板</h4>
+          <div class="attr-grid">
+            <div class="attr-row"><span class="label">HP 电压</span><span class="val red">${state.hp} / ${state.maxHp}</span></div>
+            <div class="attr-row"><span class="label">MP 电流</span><span class="val blue">${state.mp} / ${state.maxMp}</span></div>
+            <div class="attr-row"><span class="label">攻击 ATK</span><span class="val">${state.atk}</span></div>
+            <div class="attr-row"><span class="label">防御 DEF</span><span class="val">${state.def}</span></div>
+            <div class="attr-row"><span class="label">频率 EXP</span><span class="val gold">${state.xp} / ${getXpNeeded()}</span></div>
+            <div class="attr-row"><span class="label">灵石</span><span class="val gold">💰 ${state.gold}</span></div>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h4>⚙️ 设置</h4>
+          <div class="setting-row">
+            <span class="sl">🔊 音效音量</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="${vol}" oninput="onVolChange(this.value)">
+              <span class="sv" id="volValue">${vol}%</span>
+            </div>
+          </div>
+          <div class="setting-row">
+            <span class="sl">🔇 静音</span>
+            <button class="toggle-btn ${isAudioMuted() ? '' : 'on'}" onclick="toggleSoundFromProfile(this)">
+              ${isAudioMuted() ? '已静音' : '有声'}
+            </button>
+          </div>
+          <div class="setting-row">
+            <span class="sl">✨ 战斗特效</span>
+            <button class="toggle-btn ${effectsOn ? 'on' : ''}" onclick="toggleEffects(this)">
+              ${effectsOn ? '开启' : '关闭'}
+            </button>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h4>📈 战绩统计</h4>
+          <div class="stat-mini"><span class="sl">⚔️ 战斗胜利</span><span class="sv">${stats.battlesWon || 0} 场</span></div>
+          <div class="stat-mini"><span class="sl">💀 战败次数</span><span class="sv">${stats.battlesLost || 0} 场</span></div>
+          <div class="stat-mini"><span class="sl">💰 累计灵石</span><span class="sv">${stats.goldEarned || 0}</span></div>
+          <div class="stat-mini"><span class="sl">🧘 突破次数</span><span class="sv">${stats.realmBreaks || 0} 次</span></div>
+        </div>
+
+        <div class="profile-section">
+          <h4>🗑️ 危险操作</h4>
+          <button class="btn-danger" onclick="resetGame()">⚠️ 重置所有进度</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeProfileModal() {
+  const m = document.querySelector('.profile-modal');
+  if (m) m.remove();
+}
+
+function onVolChange(v) {
+  const val = parseInt(v);
+  setMasterVolume(val / 100);
+  const sv = document.getElementById('volValue');
+  if (sv) sv.textContent = val + '%';
+  const toggle = document.querySelector('.profile-modal .toggle-btn');
+  if (val === 0 && !isAudioMuted()) {
+    setAudioMuted(true);
+    if (toggle) { toggle.classList.remove('on'); toggle.textContent = '已静音'; }
+  } else if (val > 0 && isAudioMuted()) {
+    setAudioMuted(false);
+    if (toggle) { toggle.classList.add('on'); toggle.textContent = '有声'; }
+  }
+  playSFX('click');
+}
+
+function toggleSoundFromProfile(btn) {
+  toggleSound();
+  btn.classList.toggle('on', !isAudioMuted());
+  btn.textContent = isAudioMuted() ? '已静音' : '有声';
+  const slider = document.getElementById('volSlider');
+  const sv = document.getElementById('volValue');
+  const vol = isAudioMuted() ? 0 : Math.round(getSavedVolume() * 100);
+  if (slider) slider.value = vol;
+  if (sv) sv.textContent = vol + '%';
+}
+
+function toggleEffects(btn) {
+  const on = btn.classList.toggle('on');
+  localStorage.setItem('xiuxian_effects', on ? '1' : '0');
+  playSFX('click');
+}
+
+function resetGame() {
+  if (!confirm('确定要重置所有进度吗？此操作无法撤销！')) return;
+  localStorage.clear();
+  location.reload();
+}
+// 应用保存的音量
+setMasterVolume(getSavedVolume());
+
+// 页面首次用户交互时解锁音频
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('keydown', unlockAudio, { once: true });
+// 如果之前已解锁过，预先初始化
+if (localStorage.getItem('xiuxian_audio_unlocked') === '1') _audioUnlocked = true;
+
+function showSkillMenu() {
+  const menu = $('skillMenu'); menu.classList.toggle('hidden');
+  if (menu.classList.contains('hidden')) return;
+  const available = state.learnedSkills.filter(sid => SKILLS.find(s => s.id === sid));
+  menu.innerHTML = available.map(sid => {
+    const sk = SKILLS.find(s => s.id === sid);
+    const disabled = state.mp < sk.mpCost;
+    return `<button class="btn btn-info" ${disabled?'disabled':''} onclick="battleAction('skill','${sid}');hideMenus()">
+      ${sk.name} [${sk.mpCost}MP]
+    </button>`;
+  }).join('') + `<button class="btn" style="border-color:#666;color:#666" onclick="hideMenus()">CANCEL</button>`;
+}
+
+function showBattleItemMenu() {
+  const menu = $('itemMenu'); menu.classList.toggle('hidden');
+  if (menu.classList.contains('hidden')) return;
+  const consumables = Object.keys(state.bag).filter(k => state.bag[k] > 0 && ITEMS[k] && ITEMS[k].type === 'consumable');
+  menu.innerHTML = consumables.length ? consumables.map(id => {
+    const it = ITEMS[id];
+    return `<button class="btn btn-success" onclick="battleAction('item','${id}');hideMenus()">
+      ${it.name} x${state.bag[id]}
+    </button>`;
+  }).join('') : '<div class="empty-hint">无可用道具</div>';
+  menu.innerHTML += `<button class="btn" style="border-color:#666;color:#666" onclick="hideMenus()">CANCEL</button>`;
+}
+
+function hideMenus() { $('skillMenu').classList.add('hidden'); $('itemMenu').classList.add('hidden'); }
+
+function endBattle(won) {
+  const bs = state.battleState, enemy = bs.enemy;
+  const rewards = { xp: 0, gold: 0, comps: {}, item: null, lostGold: 0 };
+  if (won) {
+    let xpGain = enemy.xp, goldGain = Math.floor(enemy.gold[0] + Math.random() * (enemy.gold[1] - enemy.gold[0]));
+    if (state.xpBonus) xpGain = Math.floor(xpGain * (1 + state.xpBonus));
+    if (state.goldBonus) goldGain = Math.floor(goldGain * (1 + state.goldBonus));
+    const luckyUsed = state.luckyNextBattle;
+    if (luckyUsed) { xpGain *= 2; goldGain *= 2; state.luckyNextBattle = false; }
+    state.gold += goldGain; state.stats.goldEarned += goldGain;
+    gainXp(xpGain); state.stats.battlesWon++;
+    playSFX('coin');
+    rewards.xp = xpGain; rewards.gold = goldGain;
+    // 元器件掉落
+    const drops = dropComponents(enemy);
+    for (const [comp, qty] of Object.entries(drops)) {
+      state.components[comp] = (state.components[comp] || 0) + qty;
+      rewards.comps[comp] = qty;
+    }
+    // 随机掉落消耗品
+    if (Math.random() < 0.25) {
+      const drops2 = ['heal_pack','mp_pack','big_heal'];
+      const drop = drops2[Math.floor(Math.random() * drops2.length)];
+      state.bag[drop] = (state.bag[drop] || 0) + 1;
+      rewards.item = drop;
+    }
+    if (luckyUsed) rewards.lucky = true;
+    state.mp = Math.min(state.maxMp, state.mp + Math.floor(state.maxMp * 0.2));
+  } else {
+    const lost = Math.floor(state.gold * 0.3);
+    if (lost > 0) { state.gold -= lost; rewards.lostGold = lost; }
+    state.xp = Math.floor(state.xp * 0.5);
+    state.hp = state.maxHp; state.mp = state.maxMp;
+    state.stats.battlesLost++;
+  }
+  state.inBattle = false; state.battleState = null; state.currentRegion = null;
+  updateHeader(); saveGame();
+  // 显示结算弹窗
+  showSettleModal(won, enemy, rewards);
+}
+
+function showSettleModal(won, enemy, rewards) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const drops = Object.entries(rewards.comps);
+  const compChips = drops.map(([c, q]) => `<span class="settle-chip">${COMPONENTS[c].emoji} ${COMPONENTS[c].name.split(' ')[0]} ×${q}</span>`).join('');
+  const itemChip = rewards.item ? `<span class="settle-chip">+ ${ITEMS[rewards.item].emoji}${ITEMS[rewards.item].name}</span>` : '';
+  const luckyTag = rewards.lucky ? '<div class="settle-chip" style="color:#FAAD14;border-color:#FAAD14;margin-top:8px">🍀 好运符箓 · 双倍奖励!</div>' : '';
+
+  const body = won ? `
+    <div class="settle-enemy">击败了 <b style="color:var(--blue-200)">${enemy.emoji} ${enemy.name}</b></div>
+    <div class="settle-row pos"><span class="label">修为 [EXP]</span><span class="val">+${rewards.xp} Hz</span></div>
+    <div class="settle-row pos"><span class="label">灵石 [💰]</span><span class="val">+${rewards.gold}</span></div>
+    <div class="settle-divider"></div>
+    ${drops.length ? `<div class="settle-drops"><h4>🔩 拆解获得</h4><div class="settle-drop-chips">${compChips}</div></div>` : ''}
+    ${rewards.item ? `<div class="settle-drops"><h4>🎁 额外掉落</h4><div class="settle-drop-chips">${itemChip}</div></div>` : ''}
+    ${luckyTag}
+  ` : `
+    <div class="settle-enemy">被 <b style="color:#FF7875">${enemy.emoji} ${enemy.name}</b> 击败</div>
+    <div class="settle-row neg"><span class="label">灵石损失</span><span class="val">-${rewards.lostGold}</span></div>
+    <div class="settle-row neg"><span class="label">修为重置</span><span class="val">50%</span></div>
+    <div class="settle-divider"></div>
+    <div class="settle-row"><span class="label">状态已恢复</span><span class="val" style="color:#95DE64">满血满蓝</span></div>
+  `;
+
+  overlay.innerHTML = `
+    <div class="settle-modal ${won?'settle-win':'settle-lose'}">
+      <div class="settle-header">${won?'⚔️ 战斗胜利':'💀 战败'}</div>
+      <div class="settle-body">${body}</div>
+      <div class="settle-actions">
+        <button class="btn btn-primary" onclick="hideModal();switchTab('explore');">🗺️ 继续探索</button>
+        <button class="btn" style="color:#8B9EB5;border-color:#1E3A5F" onclick="hideModal();switchTab('cultivate');">🧘 闭关</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+// ========== 合成台 ==========
+// 配方分类
+const RECIPE_GROUPS = {
+  '🧪 恢复类': ['heal_pack', 'mp_pack', 'big_heal'],
+  '⚔️ 武器类': ['sword1', 'sword1b', 'sword2', 'sword2b', 'sword3'],
+  '🛡️ 护甲类': ['armor1', 'armor1b', 'armor2', 'armor3'],
+  '💍 饰品类': ['ring1', 'ring2', 'ring2b'],
+  '💎 突破类': ['realm_break', 'lucky'],
+};
+
+function renderCraft() {
+  const content = $('craftContent');
+  // 元器件概览（紧凑带tooltip）
+  const compsHtml = Object.keys(COMPONENTS).map(id => {
+    const c = COMPONENTS[id];
+    const qty = state.components[id] || 0;
+    return `<div class="comp-card">
+      <span class="comp-emoji">${c.emoji}</span>
+      <div class="comp-name">${c.name.split(' ')[0]}</div>
+      <div class="comp-qty" style="color:${qty>0?'var(--gold)':'#333'}">${qty}</div>
+      <span class="tip" data-tip="${c.desc}" style="position:absolute;top:6px;right:6px">?</span>
+    </div>`;
+  }).join('');
+
+  // 按分类渲染2列网格
+  let allRecipesHtml = '';
+  for (const [groupName, recipeIds] of Object.entries(RECIPE_GROUPS)) {
+    const groupRecipes = recipeIds.map(id => RECIPES.find(r => r.id === id)).filter(Boolean);
+    allRecipesHtml += `<h3 style="margin-top:14px;margin-bottom:6px">${groupName}</h3>`;
+    allRecipesHtml += '<div class="recipe-grid">';
+    groupRecipes.forEach(r => {
+      const item = ITEMS[r.result.itemId];
+      const partsHtml = Object.entries(r.parts).map(([comp, need]) => {
+        const have = state.components[comp] || 0;
+        const enough = have >= need;
+        const diff = need - have;
+        const text = enough ? `${COMPONENTS[comp].emoji}${have}` : `${COMPONENTS[comp].emoji}缺${diff}`;
+        return `<span class="${enough?'enough':'lack'}">${text}</span>`;
+      }).join('');
+      const allEnough = Object.entries(r.parts).every(([c,n]) => (state.components[c]||0) >= n);
+      allRecipesHtml += `
+        <div class="recipe-card-compact ${allEnough?'ready':''}">
+          <div class="recipe-head">
+            <span class="emoji">${item.emoji}</span>
+            <span class="name">${item.name}</span>
+          </div>
+          <div class="recipe-desc-inline">${item.desc}</div>
+          <div class="recipe-parts-inline">${partsHtml}</div>
+          <div class="recipe-btn-wrap">
+            <button class="btn ${allEnough?'btn-primary':'disabled-btn'}" style="padding:5px 10px;font-size:11px;width:100%" onclick="craftRecipe('${r.id}')" ${allEnough?'':'disabled'}>
+              ${allEnough ? '▶ 合成' : '材料不足'}
+            </button>
+          </div>
+        </div>
+      `;
+    });
+    allRecipesHtml += '</div>';
+  }
+
+  // 空元器件提示
+  const hasAnyComp = Object.values(state.components).some(v => v > 0);
+
+  content.innerHTML = `
+    <div class="craft-header">
+      <h3>🔩 仓库库存</h3>
+      <span class="tip" data-tip="去🗺️地图打怪，拆解敌人就能获得元器件！">?</span>
+    </div>
+    ${hasAnyComp ? `<div class="comp-grid" style="grid-template-columns:repeat(5,1fr)">${compsHtml}</div>` : `
+      <div class="empty-guide">
+        <div class="hint-title">😶 暂无元器件</div>
+        <div class="hint-desc">去地图打怪，拆解敌人就能获得电阻、电容等电子零件</div>
+      </div>
+    `}
+    <div class="craft-header" style="margin-top:14px">
+      <h3>📋 可用配方</h3>
+    </div>
+    ${allRecipesHtml}
+  `;
+}
+
+function craftRecipe(recipeId) {
+  const r = RECIPES.find(x => x.id === recipeId);
+  if (!r) return;
+  for (const [comp, need] of Object.entries(r.parts)) {
+    if ((state.components[comp] || 0) < need) { showToast('材料不足!'); return; }
+  }
+  for (const [comp, need] of Object.entries(r.parts)) {
+    state.components[comp] -= need;
+    if (state.components[comp] <= 0) delete state.components[comp];
+  }
+  state.bag[r.result.itemId] = (state.bag[r.result.itemId] || 0) + r.result.qty;
+  playSFX('craft');
+  showToast(`>> 合成成功! +${ITEMS[r.result.itemId].name}`);
+  saveGame(); renderCraft();
+}
+
+// ========== 物品效果 ==========
+function applyItemEffect(item) {
+  if (item.healPercent) {
+    const heal = Math.floor(state.maxHp * item.healPercent);
+    state.hp = Math.min(state.maxHp, state.hp + heal);
+    showToast(`+${heal} HP`);
+  }
+  if (item.mpPercent) {
+    const mp = Math.floor(state.maxMp * item.mpPercent);
+    state.mp = Math.min(state.maxMp, state.mp + mp);
+    showToast(`+${mp} MP`);
+  }
+  if (item.lucky) { state.luckyNextBattle = true; showToast('>> 下一场双倍奖励!'); }
+}
+
+function tryEquip(itemId) {
+  const item = ITEMS[itemId];
+  if (!item) return;
+  const slot = item.type;
+  if (['weapon','armor','accessory'].includes(slot)) {
+    const old = state.equipped[slot];
+    state.equipped[slot] = itemId;
+    if (old) state.bag[old] = (state.bag[old] || 0) + 1;
+    delete state.bag[itemId];
+    recalcStats();
+    showToast('>> 已装备 ' + item.name);
+    saveGame(); renderBag(); updateHeader();
+  }
+}
+
+// ========== 背包 ==========
+let currentBagTab = 'comp';
+function switchBagTab(tab) {
+  currentBagTab = tab;
+  document.querySelectorAll('.bag-tab').forEach((b, i) => b.classList.toggle('active', (tab === 'comp' && i === 0) || (tab === 'item' && i === 1)));
+  renderBag();
+}
+
+function renderBag() {
+  const content = $('bagContent');
+  if (currentBagTab === 'comp') {
+    // 元器件 Tab
+    const comps = Object.keys(COMPONENTS);
+    const allCompsHtml = comps.map(id => {
+      const c = COMPONENTS[id];
+      const qty = state.components[id] || 0;
+      return `<div class="comp-card">
+        <span class="comp-emoji">${c.emoji}</span>
+        <div class="comp-name">${c.name.split(' ')[0]}</div>
+        <div class="comp-qty" style="color:${qty>0?'var(--gold)':'#333'}">${qty}</div>
+        <span class="tip" data-tip="${c.desc}" style="position:absolute;top:6px;right:6px">?</span>
+      </div>`;
+    }).join('');
+    content.innerHTML = `
+      <div class="craft-header">
+        <h3>🔩 全部元器件</h3>
+        <span style="font-size:10px;color:var(--text-dim)">共 ${comps.length} 种 · 已收集 ${comps.filter(id=>(state.components[id]||0)>0).length} 种</span>
+      </div>
+      <div class="comp-grid" style="grid-template-columns:repeat(5,1fr)">${allCompsHtml}</div>
+      <div style="margin-top:14px;font-size:11px;color:var(--text-dim);line-height:1.7">
+        💡 <b style="color:var(--blue-300)">Tip：</b>元器件是合成装备和物品的基础，去地图战斗拆解敌人就能获得。
+        合成装备需要 <b style="color:var(--blue-300)">🟩 PCB板</b> 作为基底。
+      </div>
+    `;
+  } else {
+    // 物品装备 Tab
+    const equipped = ['weapon','armor','accessory'];
+    const equipNames = { weapon: '🗡️ 武器', armor: '🛡️ 护甲', accessory: '💍 饰品' };
+    const equipHtml = equipped.map(s => {
+      const it = ITEMS[state.equipped[s]];
+      return `<div class="item-card ${it?'rarity-'+it.rarity:''}">
+        <div class="item-name">${equipNames[s]}</div>
+        ${it ? `<div style="color:var(--blue-200);font-weight:600;margin-top:3px">${it.emoji} ${it.name}</div><div class="item-desc">${it.desc}</div>` : `<div class="item-desc" style="opacity:0.5;margin-top:3px">暂无装备</div>`}
+      </div>`;
+    }).join('');
+
+    const items = Object.keys(state.bag).filter(k => state.bag[k] > 0 && ITEMS[k]);
+    const itemsHtml = items.length ? items.map(id => {
+      const it = ITEMS[id];
+      const isEquip = ['weapon','armor','accessory'].includes(it.type);
+      return `<div class="item-card rarity-${it.rarity}">
+        <div class="item-name">${it.emoji} ${it.name}</div>
+        <div class="item-desc">${it.desc}</div>
+        <div class="item-qty">x${state.bag[id]}</div>
+        <div style="margin-top:6px;display:flex;gap:4px">
+          ${isEquip ? `<button class="btn btn-info" style="padding:3px 8px;font-size:10px" onclick="tryEquip('${id}')">装备</button>` :
+            `<button class="btn btn-success" style="padding:3px 8px;font-size:10px" onclick="useBagItem('${id}')">使用</button>`}
+          <button class="btn" style="padding:3px 8px;font-size:10px;color:#FF7875;border-color:#FF7875" onclick="sellItem('${id}')">卖</button>
+        </div>
+      </div>`;
+    }).join('') : `
+      <div class="empty-guide">
+        <div class="hint-title">🎒 背包空空如也</div>
+        <div class="hint-desc">去合成台做几件装备，或者去黑市买一些补给吧~</div>
+      </div>
+    `;
+
+    content.innerHTML = `
+      <h3>▸ 当前装备</h3>
+      <div class="item-grid">${equipHtml}</div>
+      <h3 style="margin-top:14px">▸ 物品背包</h3>
+      <div class="item-grid">${itemsHtml}</div>
+    `;
+  }
+}
+
+function useBagItem(itemId) {
+  if (state.inBattle) return;
+  state.bag[itemId]--;
+  applyItemEffect(ITEMS[itemId]);
+  saveGame(); renderBag(); updateHeader();
+}
+
+function sellItem(itemId) {
+  const item = ITEMS[itemId];
+  const price = Math.floor(item.price * 0.3);
+  state.gold += price; state.bag[itemId]--;
+  if (state.bag[itemId] <= 0) delete state.bag[itemId];
+  showToast(`卖出 ${item.name} +${price} 灵石`);
+  saveGame(); renderBag(); updateHeader();
+}
+
+// ========== 法术 ==========
+function renderSkills() {
+  const list = $('skillList'); list.innerHTML = '';
+  if (state.learnedSkills.length === 0) { list.innerHTML = '<div class="empty-hint">无已加载法术</div>'; return; }
+  const rIdx = Math.floor(state.realmIdx / 4);
+  let html = '<div class="skill-grid">';
+  html += state.learnedSkills.map(sid => {
+    const sk = SKILLS.find(s => s.id === sid);
+    return `<div class="skill-card">
+      <div class="skill-name">▸ ${sk.name}</div>
+      <div class="skill-info">${sk.desc}</div>
+      <div class="skill-cost">消耗: ${sk.mpCost} MP${sk.dmgMul ? ` | x${sk.dmgMul}` : ''}${sk.healMul ? ` | 回HP` : ''}</div>
+    </div>`;
+  }).join('');
+  html += '</div>';
+  const locked = SKILLS.filter(s => !state.learnedSkills.includes(s.id));
+  if (locked.length) {
+    const realmNames = ['炼气','筑基','金丹','元婴','化神','炼虚','合体','大乘','渡劫','飞升'];
+    html += `<h3 style="color:#444;font-size:11px;margin-top:14px">🔒 未解锁法术</h3><div class="skill-grid">`;
+    locked.forEach(sk => {
+      html += `<div class="skill-card locked">
+        <div class="skill-name" style="color:#555">▸ ${sk.name}</div>
+        <div class="skill-info">需要境界: ${realmNames[sk.unlockRealm]}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  list.innerHTML = html;
+}
+
+// ========== 黑市 ==========
+function renderShop() {
+  const content = $('shopContent');
+  const shopItems = ['heal_pack','big_heal','mp_pack','lucky_charm','realm_break','sword_1','sword_1b','sword_2','sword_2b','armor_1','armor_1b','armor_2','ring_1','ring_2','ring_2b'];
+  const shopComps = ['resistor','capacitor','diode','transistor','chip','pcb'];
+  content.innerHTML = `
+    <h3>🔩 元器件 (灵石购买)</h3>
+    <div class="shop-grid">${shopComps.map(id => {
+      const c = COMPONENTS[id]; const p = Math.floor({resistor:8,capacitor:12,diode:18,transistor:40,chip:120,pcb:200}[id] * 0.6);
+      return `<div class="item-card rarity-common">
+        <div class="item-name">${c.emoji} ${c.name.split(' ')[0]}</div>
+        <div class="item-desc" style="font-size:9px">${c.desc}</div>
+        <div style="color:var(--gold);font-size:10px;margin-top:3px">💰 ${p}/个</div>
+        <button class="btn btn-gold" style="padding:2px 6px;font-size:9px" ${state.gold>=p?'':'disabled'} onclick="buyComponent('${id}')">买</button>
+      </div>`;
+    }).join('')}</div>
+    <h3 style="margin-top:14px">🎒 物品装备</h3>
+    <div class="shop-grid">${shopItems.map(id => {
+      const it = ITEMS[id];
+      const canAfford = state.gold >= it.price;
+      return `<div class="item-card rarity-${it.rarity}">
+        <div class="item-name">${it.emoji||''} ${it.name}</div>
+        <div class="item-desc" style="font-size:9px">${it.desc}</div>
+        <div style="color:var(--gold);font-size:10px;margin-top:3px">💰 ${it.price}</div>
+        <button class="btn btn-gold" style="padding:2px 6px;font-size:9px" ${canAfford?'':'disabled'} onclick="buyItem('${id}')">买</button>
+      </div>`;
+    }).join('')}</div>
+  `;
+}
+
+function buyItem(itemId) {
+  const item = ITEMS[itemId];
+  if (state.gold < item.price) { showToast('灵石不足!'); return; }
+  state.gold -= item.price;
+  state.bag[itemId] = (state.bag[itemId] || 0) + 1;
+  showToast('>> 购买 ' + item.name);
+  saveGame(); updateHeader(); renderShop();
+}
+
+function buyComponent(compId) {
+  const prices = {resistor:8,capacitor:12,diode:18,transistor:40,chip:120,pcb:200};
+  const p = Math.floor(prices[compId] * 0.6);
+  if (state.gold < p) { showToast('灵石不足!'); return; }
+  state.gold -= p;
+  state.components[compId] = (state.components[compId] || 0) + 1;
+  showToast('>> +1 ' + COMPONENTS[compId].name);
+  saveGame(); updateHeader(); renderShop();
+}
+
+// ========== 修炼 ==========
+function renderCultivate() {
+  const content = $('cultivateContent');
+  const xpPerClick = 5 + Math.floor(state.atk * 0.5);
+  // 如果闭关中，显示实时信息
+  const inCultivation = !!meditationTimer;
+  const isFull = state.hp >= state.maxHp && state.mp >= state.maxMp;
+  const cultMode = isFull ? '修炼中 (+10Hz / +5MP)' : '恢复中 (+5%HP / +10%MP / +2Hz)';
+  content.innerHTML = `
+    <div style="text-align:center;padding:20px">
+      <pre style="color:#1677FF;font-size:10px;line-height:1.1;margin-bottom:12px">
+     ╔═══════════════════╗
+     ║    ▓ 闭关 修炼 ▓    ║
+     ║   ╔═══╗  ╔═══╗    ║
+     ║   ║🧘║  ⚡║    ║
+     ║   ╚═══╝  ╚═══╝    ║
+     ╚═══════════════════╝</pre>
+      <p style="color:#FAAD14;font-size:12px;margin-bottom:4px">当前境界: [ ${getRealmName()} ]</p>
+      <p style="color:#8B9CB8;font-size:11px;margin-bottom:14px">HP ${state.hp}/${state.maxHp} · MP ${state.mp}/${state.maxMp}</p>
+      <button class="btn btn-success" style="font-size:14px;padding:14px 28px" onclick="cultivateOnce()">
+        ▶ 手动修炼 +${xpPerClick} Hz
+      </button>
+      ${inCultivation
+        ? `<button class="btn btn-danger" style="padding:10px 18px;margin-left:6px" onclick="stopMeditation()">⏹ 停止闭关</button>`
+        : `<button class="btn btn-info" style="padding:10px 18px;margin-left:6px" onclick="startMeditation()">⏱ 开始闭关</button>`
+      }
+      <div id="meditationStatus" style="margin-top:14px;color:#00ccff;font-size:11px">
+        ${inCultivation ? `>> ${cultMode}` : '>> 点击开始闭关，自动积累修为'}
+      </div>
+      <div style="margin-top:16px;padding:12px;background:rgba(22,119,255,0.08);border-radius:8px;font-size:11px;color:#8B9CB8;text-align:left;line-height:1.8">
+        💡 <b style="color:#1677FF">闭关规则：</b><br>
+        · HP/MP 未满 → 先恢复气血（同时 +2Hz 经验）<br>
+        · 恢复满后 → 自动切换修炼模式（+10Hz / +5MP）<br>
+        · 闭关在后台持续运行，切面板/刷新都不中断
+      </div>
+    </div>
+  `;
+}
+
+let meditationTimer = null;
+function cultivateOnce() { gainXp(5 + Math.floor(state.atk * 0.5)); state.mp = Math.min(state.maxMp, state.mp + 2); updateHeader(); saveGame(); }
+
+function startMeditation() {
+  if (meditationTimer) { showToast('已在闭关中'); return; }
+  showToast('>> 开始闭关');
+  playSFX('heal');
+  // 存离线闭关标记
+  localStorage.setItem('xiuxian_cultivate_start', Date.now().toString());
+  localStorage.setItem('xiuxian_cultivate_wasFull', (state.hp >= state.maxHp && state.mp >= state.maxMp).toString());
+  meditationTimer = setInterval(tickMeditation, 2000);
+  tickMeditation(); // 立刻执行一次
+  renderCultivate(); // 刷新按钮状态
+}
+
+function stopMeditation() {
+  if (!meditationTimer) return;
+  clearInterval(meditationTimer);
+  meditationTimer = null;
+  // 清除离线闭关标记（不存了，因为停止后就是手动结束）
+  localStorage.removeItem('xiuxian_cultivate_start');
+  localStorage.removeItem('xiuxian_cultivate_wasFull');
+  showToast('>> 闭关结束');
+  playSFX('click');
+  renderCultivate();
+}
+
+function tickMeditation() {
+  if (!meditationTimer) return;
+  const isFull = state.hp >= state.maxHp && state.mp >= state.maxMp;
+  // 实时更新离线标记状态
+  localStorage.setItem('xiuxian_cultivate_wasFull', isFull.toString());
+  if (isFull) {
+    // 满状态：快速积累修为
+    gainXp(10);
+    state.mp = Math.min(state.maxMp, state.mp + 5);
+  } else {
+    // 不满状态：恢复 + 少量经验（让玩家感知到在修仙）
+    state.hp = Math.min(state.maxHp, state.hp + Math.floor(state.maxHp * 0.05));
+    state.mp = Math.min(state.maxMp, state.mp + Math.floor(state.maxMp * 0.1));
+    gainXp(2);  // 不满也给经验！修复了之前不加经验的问题
+  }
+  updateHeader();
+  // 如果修炼面板开着，更新状态文字
+  const statusEl = $('meditationStatus');
+  if (statusEl) {
+    const mode = isFull ? '修炼中 (+10Hz / +5MP)' : '恢复中 (+5%HP / +10%MP / +2Hz)';
+    statusEl.textContent = '>> ' + mode;
+  }
+  saveGame();
+}
+
+// ========== 事件系统 ==========
+function triggerEvent() {
+  const ev = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+  showModal(ev.title, ev.ascii, ev.desc, ev.choices);
+}
+
+function showModal(title, ascii, desc, choices) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">!! ${title} !!</div>
+      <div class="modal-ascii">${ascii || ''}</div>
+      <p>${desc}</p>
+      <div class="modal-actions">
+        ${choices.map((c,i) => `<button class="btn btn-info" onclick="handleEvent(${i})">${c.text}</button>`).join('')}
+      </div>
+    </div>
+  `;
+  overlay.id = 'eventModal'; document.body.appendChild(overlay);
+  window._currentEvent = choices;
+}
+
+function handleEvent(choiceIdx) {
+  const choices = window._currentEvent, choice = choices[choiceIdx];
+  $('eventModal').remove(); window._currentEvent = null;
+  const a = choice.action;
+  if (a === 'leave') { showToast('离开'); }
+  else if (a === 'get_item') {
+    choice.items.forEach(id => state.bag[id] = (state.bag[id]||0)+1);
+    state.gold += choice.gold || 0;
+    if (choice.components) {
+      for (const [c, rng] of Object.entries(choice.components)) {
+        const n = Math.floor(Math.random()*(rng[1]-rng[0]+1))+rng[0];
+        if (n>0) state.components[c] = (state.components[c]||0)+n;
+      }
+    }
+    showToast('>> 获得物品和元器件!');
+  }
+  else if (a === 'get_components') {
+    let msg = '';
+    for (const [c, rng] of Object.entries(choice.comps)) {
+      const n = Math.floor(Math.random()*(rng[1]-rng[0]+1))+rng[0];
+      if (n>0) { state.components[c] = (state.components[c]||0)+n; msg += COMPONENTS[c].emoji + n + ' '; }
+    }
+    showToast('>> 拆解获得: ' + msg);
+  }
+  else if (a === 'xp_event') { gainXp(choice.xpGain); showToast(`>> +${choice.xpGain} 修为`); }
+  else if (a === 'heal_event') { state.hp = state.maxHp; state.mp = state.maxMp; showToast('>> 完全恢复!'); }
+  else if (a === 'damage_event') { state.hp = Math.max(1, Math.floor(state.hp * (1 - choice.damagePercent))); showToast('>> 受到伤害'); }
+  else if (a === 'flee_event') { state.hp = Math.max(1, Math.floor(state.hp * (1 - choice.hpCost))); showToast('成功逃离'); }
+  else if (a === 'cultivate_event') { for (let i=0;i<choice.xpMul;i++) gainXp(20); showToast('>> 修为大增!'); }
+  else if (a === 'buy_event') {
+    if (state.gold >= choice.cost) { state.gold -= choice.cost; state.bag[choice.item] = (state.bag[choice.item]||0)+1; showToast('购买成功'); }
+    else showToast('灵石不足');
+  }
+  else if (a === 'battle_event' && state.currentRegion) startBattle(state.currentRegion, choice.enemyScale);
+  updateHeader(); saveGame();
+}
+
+// ========== 弹窗工具 ==========
+function hideModal() {
+  const overlay = document.querySelector('.modal-overlay');
+  if (overlay) overlay.remove();
+}
+
+function showWelcomeModal() {
+  if (localStorage.getItem('xiuxian_welcome_seen')) return;
+  localStorage.setItem('xiuxian_welcome_seen', '1');
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal welcome-modal">
+      <div class="modal-header">👋 欢迎来到赛博修仙</div>
+      <p style="color:var(--blue-200);font-size:13px;font-weight:600">电子工程 × 修仙</p>
+      <p>在这个科技崩塌的世界里，你需要拆解敌人获得电子元器件，用PCB板组装装备，超频CPU释放法术，一步步飞升。</p>
+      <div class="welcome-steps">
+        <div class="welcome-step"><span class="num">1</span><div class="content"><b>探索遇敌：</b>🗺️ 去废墟街区，点地图卡片开始战斗</div></div>
+        <div class="welcome-step"><span class="num">2</span><div class="content"><b>拆解零件：</b>⚔️ 击败敌人获得电阻、电容、芯片等元器件</div></div>
+        <div class="welcome-step"><span class="num">3</span><div class="content"><b>合成装备：</b>🔧 去合成台用PCB板+零件组装装备和道具</div></div>
+        <div class="welcome-step"><span class="num">4</span><div class="content"><b>闭关突破：</b>🧘 积累修为，突破境界解锁更强法术</div></div>
+      </div>
+      <p style="font-size:11px;color:var(--text-dim);border-top:1px solid var(--border);padding-top:10px">
+        💡 悬停 <span class="tip" style="position:relative;display:inline-block;margin:0 2px">?</span> 图标查看详细说明 · 自动存档
+      </p>
+      <div class="modal-actions" style="justify-content:center;margin-top:8px">
+        <button class="btn btn-primary" onclick="hideModal();switchTab('explore');">🚀 开始修仙</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+// ========== 初始化 ==========
+function init() {
+  if (!loadGame()) {
+    recalcStats();
+    state.hp = state.maxHp; state.mp = state.maxMp;
+    state.components = { resistor: 5, capacitor: 3 };
+    state.bag = { heal_pack: 2, mp_pack: 2 };
+    state.gold = 150;
+    showWelcomeModal();
+  } else {
+    recalcStats();
+    // 离线闭关结算：如果上次存着离线闭关标记，结算收益
+    const offlineStart = parseInt(localStorage.getItem('xiuxian_cultivate_start') || '0');
+    if (offlineStart > 0) {
+      const now = Date.now();
+      const elapsedMs = Math.min(now - offlineStart, 24 * 60 * 60 * 1000); // 最多 24 小时
+      const ticks = Math.floor(elapsedMs / 2000); // 2秒一次
+      if (ticks > 0) {
+        const wasFull = JSON.parse(localStorage.getItem('xiuxian_cultivate_wasFull') || 'false');
+        if (wasFull) {
+          for (let i = 0; i < ticks; i++) { gainXp(10); state.mp = Math.min(state.maxMp, state.mp + 5); }
+        } else {
+          for (let i = 0; i < ticks; i++) {
+            state.hp = Math.min(state.maxHp, state.hp + Math.floor(state.maxHp * 0.05));
+            state.mp = Math.min(state.maxMp, state.mp + Math.floor(state.maxMp * 0.1));
+            gainXp(2);
+          }
+        }
+        const elapsedMin = Math.floor(elapsedMs / 60000);
+        showToast(`>> 闭关恢复 ${elapsedMin} 分钟，修为大增！`);
+      }
+      localStorage.removeItem('xiuxian_cultivate_start');
+      localStorage.removeItem('xiuxian_cultivate_wasFull');
+    }
+    showToast('>> 欢迎回来, ' + getRealmName());
+  }
+  updateHeader(); saveGame();
+  renderRegions();
+}
+init();
+setInterval(saveGame, 30000);
+</script>
+</body>
+</html>
