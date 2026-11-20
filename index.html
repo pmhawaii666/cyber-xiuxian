@@ -263,7 +263,95 @@
   .btn-info:hover:not(:disabled) { box-shadow: 0 4px 14px rgba(126,200,255,0.25); transform: translateY(-1px); }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-  /* ========== ASCII 地图卡片（甜美风） ========== */
+  /* ========== 世界地图（坐标拼凑版 · 甜美风） ========== */
+  .world-map {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/1;
+    min-height: 260px;
+    background:
+      radial-gradient(ellipse at 20% 90%, rgba(255,143,177,0.12) 0%, transparent 45%),
+      radial-gradient(ellipse at 80% 20%, rgba(126,200,255,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(201,160,255,0.1) 0%, transparent 60%),
+      linear-gradient(135deg, #FFFAFB 0%, #F4F8FF 50%, #FBF5FF 100%);
+    border: 1.5px solid var(--border2);
+    border-radius: 20px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: inset 0 0 30px rgba(255,143,177,0.08);
+  }
+  .world-map-svg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+  }
+  .map-node {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    cursor: pointer;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s;
+  }
+  .map-node:hover { transform: translate(-50%, -100%) scale(1.15); z-index: 10; }
+  .map-node-pin {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, #FFFFFF, #FFF5F8);
+    border: 2.5px solid var(--pink-200);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 4px 14px rgba(255,143,177,0.25);
+    position: relative;
+  }
+  .map-node-pin::after {
+    content: '';
+    position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid var(--pink-200);
+  }
+  .map-node-current .map-node-pin {
+    border-color: var(--pink-400);
+    background: linear-gradient(135deg, var(--pink-400), var(--blue-300));
+    color: #fff;
+    box-shadow: 0 0 24px var(--pink-400), 0 4px 16px rgba(255,143,177,0.4);
+    animation: nodePulse 1.8s ease-in-out infinite;
+  }
+  @keyframes nodePulse {
+    0%,100% { box-shadow: 0 0 20px var(--pink-400), 0 4px 16px rgba(255,143,177,0.3); }
+    50% { box-shadow: 0 0 36px var(--pink-400), 0 4px 20px rgba(255,143,177,0.5); }
+  }
+  .map-node-label {
+    margin-top: 8px;
+    font-size: 11px; font-weight: 600;
+    color: var(--pink-500);
+    text-shadow: 0 1px 2px rgba(255,255,255,0.9);
+    white-space: nowrap;
+  }
+  .map-node-locked { opacity: 0.55; cursor: not-allowed; }
+  .map-node-locked:hover { transform: translate(-50%, -100%); }
+  .map-node-locked-pin {
+    background: #F0F0F5;
+    border-color: #CCC;
+    box-shadow: none;
+  }
+  .map-node-locked-pin::after { border-top-color: #CCC; }
+  .map-node-locked-label { color: #AAA; font-size: 10px; }
+
+  .region-detail-panel {
+    background: #FFFFFF;
+    border: 1.5px solid var(--border2);
+    border-radius: 16px;
+    padding: 16px 18px;
+    box-shadow: 0 6px 20px rgba(255,143,177,0.12);
+    min-height: 80px;
+  }
+  .region-detail-inner { /* 内容由 JS 生成 */ }
+
+  /* ========== ASCII 地图卡片（甜美风 · 兼容旧样式） ========== */
   .region-card {
     background: #FFFFFF;
     border: 1.5px solid var(--border2);
@@ -635,8 +723,84 @@
   .realm-badge[data-realm="8"] { border-color: #FFE580; color: #FFE580; box-shadow: 0 0 22px rgba(255,229,128,0.6); animation: flicker 2s infinite; }
   .realm-badge[data-realm="9"] { border-color: #FFD580; color: #fff; background: linear-gradient(135deg, var(--pink-400), var(--gold)); box-shadow: 0 0 30px rgba(255,179,71,0.7); }
 
-  /* ========== 战斗动态特效（甜美版） ========== */
+  /* ========== 立绘卡片（敌人 & 武器通用） ========== */
+  /* 通用稀有度渐变背景 */
+  .art-common   { background: linear-gradient(135deg, #F8F9FA, #FFFAF0); }
+  .art-rare     { background: linear-gradient(135deg, #E8F4FF, #F0F8FF); }
+  .art-epic     { background: linear-gradient(135deg, #F0E6FF, #FFE5F0); }
+  .art-legend   { background: linear-gradient(135deg, #FFF0D5, #FFE5F0); }
+  /* 稀有度光晕 */
+  .glow-common  { box-shadow: 0 4px 16px rgba(0,0,0,0.06), 0 0 0 1px #EEE inset; }
+  .glow-rare    { box-shadow: 0 4px 20px rgba(126,200,255,0.25), 0 0 0 1px #B3D9FF inset; }
+  .glow-epic    { box-shadow: 0 4px 24px rgba(201,160,255,0.35), 0 0 0 1px #D4B0F0 inset; }
+  .glow-legend  { box-shadow: 0 4px 28px rgba(255,179,71,0.45), 0 0 0 1px #FFD580 inset, 0 0 24px rgba(255,143,177,0.2); }
 
+  /* 武器立绘卡片 */
+  .weapon-art {
+    position: relative;
+    border-radius: 16px;
+    padding: 20px 14px 12px;
+    text-align: center;
+    border: 1.5px solid var(--border2);
+    transition: transform 0.25s;
+    overflow: hidden;
+  }
+  .weapon-art:hover { transform: translateY(-3px); }
+  .weapon-art::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 40%;
+    background: radial-gradient(ellipse at center bottom, rgba(255,143,177,0.18), transparent 70%);
+    pointer-events: none;
+  }
+  .weapon-art-emoji {
+    font-size: 48px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.08));
+    margin-bottom: 8px;
+    animation: artFloat 2.5s ease-in-out infinite;
+  }
+  .weapon-art-name {
+    font-size: 13px; font-weight: 700; color: var(--text);
+    margin-bottom: 4px;
+  }
+  .weapon-art-desc {
+    font-size: 10px; color: var(--text-dim); line-height: 1.5;
+    white-space: pre-line; margin-bottom: 6px;
+  }
+  .weapon-art-rarity {
+    position: absolute; top: 8px; right: 8px;
+    font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 8px;
+  }
+  .rarity-badge-common  { background: rgba(0,0,0,0.06); color: #888; }
+  .rarity-badge-rare    { background: rgba(126,200,255,0.25); color: #5B9FFF; }
+  .rarity-badge-epic    { background: rgba(201,160,255,0.35); color: #A06BE6; }
+  .rarity-badge-legend  { background: linear-gradient(135deg, #FFB347, #FF8FB1); color: #fff; }
+  @keyframes artFloat {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  /* 敌人立绘卡片（战斗中用） */
+  .enemy-art {
+    background: linear-gradient(135deg, #FFF5F8, #FFE4EC);
+    border: 2px solid var(--pink-300);
+    border-radius: 18px;
+    padding: 14px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(255,143,177,0.2);
+    margin-bottom: 10px;
+  }
+  .enemy-art-boss {
+    background: linear-gradient(135deg, #FFE4EC, #FFD5DC);
+    border-color: var(--pink-500);
+    box-shadow: 0 6px 24px rgba(255,112,150,0.35);
+  }
+  .enemy-art-emoji { font-size: 60px; line-height: 1; margin-bottom: 8px; animation: artFloat 2.5s ease-in-out infinite; }
+  .enemy-art-name { font-weight: 800; font-size: 15px; color: var(--danger); letter-spacing: 1px; margin-bottom: 6px; }
+  .enemy-art-stats { display: flex; justify-content: center; gap: 12px; font-size: 11px; color: var(--text-dim); }
+  .enemy-art-stats b { color: var(--text); }
+
+  /* ========== 战斗特效 ========== */
   /* 伤害数字飘字 */
   .dmg-num {
     position: absolute; left: 50%; top: 30%;
@@ -914,11 +1078,10 @@
     </div>
   </div>
 
-  <!-- 导航 -->
+  <!-- 导航（合成已整合进乾坤袋） -->
   <div class="nav">
     <button class="nav-btn active" data-tab="explore">🌸 赏花</button>
     <button class="nav-btn" data-tab="battle">✨ 历练</button>
-    <button class="nav-btn" data-tab="craft">🧪 炼丹</button>
     <button class="nav-btn" data-tab="skills">💫 仙术</button>
     <button class="nav-btn" data-tab="bag">🎒 乾坤袋</button>
     <button class="nav-btn" data-tab="shop">🏯 坊市</button>
@@ -950,11 +1113,12 @@
     <div id="skillList"></div>
   </div>
 
-  <!-- 仓库面板 -->
+  <!-- 仓库面板（炼丹已整合进来） -->
   <div class="panel hidden" id="panel-bag" data-header="🎒 乾坤袋">
     <div class="bag-tabs">
       <button class="bag-tab active" onclick="switchBagTab('comp')">🔩 仙材</button>
       <button class="bag-tab" onclick="switchBagTab('item')">🎒 法宝</button>
+      <button class="bag-tab" onclick="switchBagTab('craft')">🧪 炼丹</button>
     </div>
     <div id="bagContent"></div>
   </div>
@@ -1079,6 +1243,14 @@ const RECIPES = [
   { id: 'sword2',     name: '⚔️ 灵能长剑',   parts: { pcb: 2, transistor: 5, chip: 1 }, result: { itemId: 'sword_2', qty: 1 } },
   { id: 'sword2b',    name: '🔫 等离子步枪', parts: { pcb: 2, chip: 1, transistor: 4, capacitor: 3 }, result: { itemId: 'sword_2b', qty: 1 } },
   { id: 'sword3',     name: '🌙 虚空斩',     parts: { pcb: 3, chip: 2, cpu: 1, transistor: 6 }, result: { itemId: 'sword_3', qty: 1 } },
+  { id: 'axe1',       name: '🪓 电解斧',     parts: { pcb: 1, transistor: 4, resistor: 8 }, result: { itemId: 'axe_1', qty: 1 } },
+  { id: 'bow1',       name: '🏹 光纤狙击',   parts: { pcb: 1, transistor: 2, diode: 5 }, result: { itemId: 'bow_1', qty: 1 } },
+  { id: 'sword2c',    name: '⛏️ 超频凿',     parts: { pcb: 2, transistor: 3, chip: 1, heatsink: 2 }, result: { itemId: 'sword_2c', qty: 1 } },
+  { id: 'sword2d',    name: '🌊 潮汐之刃',   parts: { pcb: 2, transistor: 4, capacitor: 5 }, result: { itemId: 'sword_2d', qty: 1 } },
+  { id: 'sword3b',    name: '⚡ 霹雳枪',     parts: { pcb: 3, chip: 2, cpu: 1, heatsink: 3, transistor: 8 }, result: { itemId: 'sword_3b', qty: 1 } },
+  { id: 'sword3c',    name: '🌀 量子三叉戟', parts: { pcb: 3, chip: 3, cpu: 1, capacitor: 8 }, result: { itemId: 'sword_3c', qty: 1 } },
+  { id: 'sword4',     name: '🌈 飞升之剑',   parts: { pcb: 5, chip: 4, cpu: 2, ram: 1, transistor: 12 }, result: { itemId: 'sword_4', qty: 1 } },
+  { id: 'sword5',     name: '🌠 星辰之剑',   parts: { pcb: 6, chip: 5, cpu: 3, ram: 2, capacitor: 15 }, result: { itemId: 'sword_5', qty: 1 } },
   // 护甲
   { id: 'armor1',     name: '🛡️ 轻量护盾',   parts: { pcb: 1, diode: 3, capacitor: 3 }, result: { itemId: 'armor_1', qty: 1 } },
   { id: 'armor1b',    name: '🦺 阻流背心',   parts: { pcb: 1, resistor: 4, heatsink: 2 }, result: { itemId: 'armor_1b', qty: 1 } },
@@ -1090,32 +1262,39 @@ const RECIPES = [
   { id: 'ring2b',     name: '🧠 超频芯片',   parts: { cpu: 1, pcb: 1, capacitor: 4 }, result: { itemId: 'ring_2b', qty: 1 } },
 ];
 
-// ========== 地图（带ASCII艺术） ==========
+// ========== 世界地图（坐标地图版） ==========
+// x, y 百分比坐标，用于 SVG 路径连线与地点点定位
 const REGIONS = [
-  { id: 'ruin', name: '废墟街区', color: 'ascii-ruin', minRealm: 0, minStage: 0, enemies: ['ai_scout','glitch_rat','broken_drone'],
-    ascii: '┌──────────────────┐\n│ 🏚️  ▓▓  ░░  🏚️    │\n│ ▓▓░░▓▓  ░░▓▓░░▓▓  │\n│ ═══════════════════│\n│ [信号弱]  AI出没中  │\n└──────────────────┘',
-    desc: '科技崩塌后的城市残骸，游荡着低级失控AI' },
-  { id: 'circuit', name: '电路迷宫', color: 'ascii-circuit', minRealm: 0, minStage: 2, enemies: ['circuit_worm','chip_goblin','fuse_imp'],
-    ascii: '╔══╦══╦══╦══╦══╦══╦══╗\n║  ║  ║  ║  ║  ║  ║  ║\n╠══╬══╬══╬══╬══╬══╬══╣\n║→─╫──╫──╫──╫──╫─←║\n╚══╩══╩══╩══╩══╩══╩══╝',
-    desc: '巨大的PCB板地面，铜箔走线像迷宫' },
-  { id: 'memory', name: '内存墓地', color: 'ascii-memory', minRealm: 1, minStage: 0, enemies: ['ram_ghost','bit_hunter','data_shade'],
-    ascii: '▓█▓█▓█▓█▓█▓█▓█▓█▓█▓█\n█░█░█░█░█░█░█░█░█░█░█\n▓█▓█▓█▓█▓█▓█▓█▓█▓█▓█\n    [内存条堆成山谷]    ',
-    desc: '废弃内存条堆积的山谷，数据残魂游荡' },
-  { id: 'battery_sea', name: '电池之海', color: 'ascii-battery', minRealm: 1, minStage: 2, enemies: ['electro_fish','acid_slime','leech_tank'],
-    ascii: '══════════════════════\n  ~~ ≈≈ ~~ ≈≈ ~~ ≈≈  \n  ╔══╗   ╔══╗   ╔══╗  \n  ║🔋║   ║🔋║   ║🔋║  \n  ╚══╝   ╚══╝   ╚══╝  \n══════════════════════',
-    desc: '液态电池组成的发光海洋，漏电危险' },
-  { id: 'deep_web', name: '深渊网络', color: 'ascii-web', minRealm: 2, minStage: 0, enemies: ['cyber_ghost','virus_spirit','net_demon'],
-    ascii: '🕸️🕸️🕸️🕸️🕸️🕸️🕸️🕸️\n ╲ │ ╱   ╲ │ ╱  \n   ╳       ╳    \n ╱ │ ╲   ╱ │ ╲  \n🕸️🕸️🕸️🕸️🕸️🕸️🕸️🕸️',
-    desc: '被遗忘的网络空间，充满赛博心魔' },
-  { id: 'cpu_core', name: 'CPU核心', color: 'ascii-cpu', minRealm: 3, minStage: 0, enemies: ['overclock_beast','heat_wraith','bios_boss'],
-    ascii: '┌─────────────────┐\n│  ┌───CPU───┐    │\n│  │ ▓█▓█▓█▓█ │    │\n│  │ ▓█▓█▓█▓█ │    │\n│  └─────────┘    │\n│ [危险: 超频中]   │\n└─────────────────┘',
-    desc: '巨大CPU内部，超频掉帧的Boss战' },
-  { id: 'void_station', name: '虚空基站', color: 'ascii-station', minRealm: 4, minStage: 0, enemies: ['void_pirate','cyber_dragon','void_master'],
-    ascii: '    ╱╲    \n   ╱🛰️╲   \n  ╱      ╲  \n ╱═══╗═════╲ \n╱    ║      ╲\n    ▼▼▼',
-    desc: '漂浮在数据流中的终极战场' },
-  { id: 'ascension', name: '飞升之门', color: 'ascii-ascend', minRealm: 5, minStage: 0, enemies: ['ascension_trial','final_demon'],
-    ascii: '      ╱╲\n     ╱══╲\n    ╱    ╲\n   ╱  ☀️  ╲\n  ╱════════╲\n ╱  ║  ║  ║  ╲\n╱══════════════╲',
-    desc: '传说的终点，飞升之境' },
+  { id: 'ruin',        name: '废墟街区',   x: 14, y: 82, icon: '🏚️',  emoji: '🏚️', minRealm: 0, minStage: 0, enemies: ['ai_scout','glitch_rat','broken_drone'],
+    desc: '科技崩塌后的城市残骸，游荡着低级失控AI', rarity: 'common' },
+  { id: 'circuit',     name: '电路迷宫',   x: 32, y: 66, icon: '🔌',  emoji: '🦾', minRealm: 0, minStage: 2, enemies: ['circuit_worm','chip_goblin','fuse_imp'],
+    desc: '巨大的PCB板地面，铜箔走线像迷宫', rarity: 'common' },
+  { id: 'memory',      name: '内存墓地',   x: 52, y: 52, icon: '💾',  emoji: '💀', minRealm: 1, minStage: 0, enemies: ['ram_ghost','bit_hunter','data_shade'],
+    desc: '废弃内存条堆积的山谷，数据残魂游荡', rarity: 'rare' },
+  { id: 'battery_sea', name: '电池之海',   x: 28, y: 44, icon: '🔋',  emoji: '🌊', minRealm: 1, minStage: 2, enemies: ['electro_fish','acid_slime','leech_tank'],
+    desc: '液态电池组成的发光海洋，漏电危险', rarity: 'rare' },
+  { id: 'deep_web',    name: '深渊网络',   x: 70, y: 42, icon: '🕸️',  emoji: '👁️', minRealm: 2, minStage: 0, enemies: ['cyber_ghost','virus_spirit','net_demon'],
+    desc: '被遗忘的网络空间，充满赛博心魔', rarity: 'epic' },
+  { id: 'cpu_core',    name: 'CPU核心',    x: 50, y: 26, icon: '🧠',  emoji: '⚠️', minRealm: 3, minStage: 0, enemies: ['overclock_beast','heat_wraith','bios_boss'],
+    desc: '巨大CPU内部，超频掉帧的Boss战', rarity: 'epic' },
+  { id: 'void_station',name: '虚空基站',   x: 78, y: 14, icon: '🛰️',  emoji: '🚀', minRealm: 4, minStage: 0, enemies: ['void_pirate','cyber_dragon','void_master'],
+    desc: '漂浮在数据流中的终极战场', rarity: 'legend' },
+  { id: 'ascension',   name: '飞升之门',   x: 50, y: 4,  icon: '🌅',  emoji: '✨', minRealm: 5, minStage: 0, enemies: ['ascension_trial','final_demon'],
+    desc: '传说的终点，飞升之境', rarity: 'legend' },
+];
+// 地图连接路径（按关卡顺序串起来，形成路径网）
+const REGION_PATHS = [
+  ['ruin', 'circuit'],
+  ['circuit', 'memory'],
+  ['circuit', 'battery_sea'],
+  ['memory', 'battery_sea'],
+  ['memory', 'deep_web'],
+  ['battery_sea', 'cpu_core'],
+  ['memory', 'cpu_core'],
+  ['deep_web', 'cpu_core'],
+  ['cpu_core', 'void_station'],
+  ['void_station', 'ascension'],
+  ['cpu_core', 'ascension'],
 ];
 
 // ========== 电子敌人 ==========
@@ -1286,19 +1465,33 @@ const ITEMS = {
   mp_pack:     { emoji:'🔋', name: '🔋 灵力电池',   desc: '恢复50%电流[MP]', type: 'consumable', rarity: 'common', mpPercent: 0.5, price: 40 },
   realm_break: { emoji:'💎', name: '💎 破境丹',     desc: '帮助突破境界',       type: 'consumable', rarity: 'epic', breakChance: 1, price: 2000 },
   lucky_charm: { emoji:'🍀', name: '🍀 好运符箓',   desc: '下一场战斗双倍奖励', type: 'consumable', rarity: 'rare', lucky: true, price: 200 },
-  // 武器 (6种) — 全部带被动特效
-  sword_1: { emoji:'🗡️', name: '🗡️ 数据刃·初',   desc: '攻击+15',         type: 'weapon', rarity: 'common', atkBonus: 15,  price: 150,
+  // 武器 (12种) — 全部带被动特效
+  sword_1: { emoji:'🗡️', name: '🗡️ 数据刃·初',   desc: '攻击+15\n最基础的PCB刃，入门首选', type: 'weapon', rarity: 'common', atkBonus: 15,  price: 150,
     passive: null },
   sword_1b:{ emoji:'🔪', name: '🔪 电路匕首',     desc: '攻击+25,暴击+5%\n暴击附带流血(下回合10%攻击力额外伤害)', type: 'weapon', rarity: 'common', atkBonus: 25, critBonus: 0.05, price: 200,
     passive: { critBleed: { bleedPct: 0.10 } } },
+  axe_1:   { emoji:'🪓', name: '🪓 电解斧',       desc: '攻击+32\n受击时反弹5%伤害', type: 'weapon', rarity: 'common', atkBonus: 32, price: 250,
+    passive: { reflect: { chance: 1, reflectPct: 0.05 } } },
+  bow_1:   { emoji:'🏹', name: '🏹 光纤狙击',     desc: '攻击+20\n先手攻击必定暴击', type: 'weapon', rarity: 'common', atkBonus: 20, critBonus: 0.30, price: 300,
+    passive: null },
   sword_2: { emoji:'⚔️', name: '⚔️ 灵能长剑',     desc: '攻击+50\n15%概率附加信号干扰(敌人下回合命中-30%)', type: 'weapon', rarity: 'rare',   atkBonus: 50,  price: 800,
     passive: { signalJammer: { chance: 0.15, duration: 1, missPct: 0.30 } } },
   sword_2b:{ emoji:'🔫', name: '🔫 等离子步枪',   desc: '攻击+60,法术伤害+20%', type: 'weapon', rarity: 'rare', atkBonus: 60, price: 1200,
     passive: { skillDmgMul: 1.20 } },
+  sword_2c:{ emoji:'⛏️', name: '⛏️ 超频凿',       desc: '攻击+70,暴击+8%\n10%概率真实伤害', type: 'weapon', rarity: 'rare', atkBonus: 70, critBonus: 0.08, price: 1400,
+    passive: null },
+  sword_2d:{ emoji:'🌊', name: '🌊 潮汐之刃',     desc: '攻击+55\n每次攻击恢复10MP', type: 'weapon', rarity: 'rare', atkBonus: 55, price: 1500,
+    passive: null },
   sword_3: { emoji:'🌙', name: '🌙 虚空斩',       desc: '攻击+200\n暴击时30%概率额外释放50%威力的虚空波纹', type: 'weapon', rarity: 'epic',   atkBonus: 200, price: 3000,
     passive: { critExtraHit: { chance: 0.30, mul: 0.50 } } },
+  sword_3b:{ emoji:'⚡', name: '⚡ 霹雳枪',        desc: '攻击+260\n暴击+10%,敌人每回合开始掉血5%(真实)', type: 'weapon', rarity: 'epic',   atkBonus: 260, critBonus: 0.10, price: 4500,
+    passive: { signalJammer: { chance: 0.25, duration: 2, missPct: 0.20 } } },
+  sword_3c:{ emoji:'🌀', name: '🌀 量子三叉戟',   desc: '攻击+180,法术伤害+35%', type: 'weapon', rarity: 'epic',   atkBonus: 180, price: 5000,
+    passive: { skillDmgMul: 1.35 } },
   sword_4: { emoji:'🌈', name: '🌈 飞升之剑',     desc: '攻击+800\n攻击有20%概率触发雷击(真实伤害=攻击力50% 无视防御)', type: 'weapon', rarity: 'legend', atkBonus: 800, price: 20000,
     passive: { thunderStrike: { chance: 0.20, realDmgPct: 0.50 } } },
+  sword_5: { emoji:'🌠', name: '🌠 星辰之剑',     desc: '攻击+1200\n每回合开始自动恢复5%HP', type: 'weapon', rarity: 'legend', atkBonus: 1200, price: 35000,
+    passive: { autoHeal: { hpThreshold: 0.99, healPct: 0.05 } } },
   // 护甲 (5种)
   armor_1: { emoji:'🛡️', name: '🛡️ 轻量护盾',     desc: '防御+10,生命+50',       type: 'armor', rarity: 'common', defBonus: 10, hpBonus: 50,   price: 120,
     passive: null },
@@ -1629,13 +1822,13 @@ function showHitEffect(text, color, x, y) {
 // ========== 标签切换 ==========
 function switchTab(tab) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  ['explore','battle','craft','skills','bag','shop','cultivate','quests'].forEach(p => {
+  ['explore','battle','skills','bag','shop','cultivate','quests'].forEach(p => {
     $('panel-' + p).classList.toggle('hidden', p !== tab);
   });
+  // craft panel 已整合进 bag，但保留面板 DOM
   if (tab === 'explore') renderRegions();
-  if (tab === 'craft') renderCraft();
   if (tab === 'skills') renderSkills();
-  if (tab === 'bag') renderBag();
+  if (tab === 'bag') { switchBagTab(currentBagTab); }
   if (tab === 'shop') renderShop();
   if (tab === 'cultivate') renderCultivate();
   if (tab === 'quests') renderQuests();
@@ -1643,30 +1836,136 @@ function switchTab(tab) {
 }
 document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
-// ========== 地图 ==========
+// ========== 世界地图（坐标拼凑版） ==========
 function renderRegions() {
   const list = $('regionList');
   const realmNames = ['炼气','筑基','金丹','元婴','化神','炼虚','合体','大乘','渡劫','飞升'];
-  let html = '<div class="region-grid">';
+  const rp = state.regionProgress || {};
+  const rIdx = Math.floor(state.realmIdx / 4);
+  const sIdx = state.realmIdx % 4;
+
+  // 生成 SVG 路径
+  const pathColorMap = { common: '#FFD1DC', rare: '#FFC1D4', epic: '#C9A0FF', legend: '#FFB347' };
+  let svgPaths = '';
+  for (const [fromId, toId] of REGION_PATHS) {
+    const from = REGIONS.find(r => r.id === fromId);
+    const to = REGIONS.find(r => r.id === toId);
+    if (!from || !to) continue;
+    const unlocked = (rIdx > from.minRealm || (rIdx === from.minRealm && sIdx >= from.minStage)) ||
+                     (rIdx > to.minRealm || (rIdx === to.minRealm && sIdx >= to.minStage));
+    svgPaths += `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}"
+      stroke="${unlocked?'#FFD1DC':'#DDD'}" stroke-width="2" stroke-dasharray="${unlocked?'6 4':'3 6'}"
+      opacity="${unlocked?'0.7':'0.35'}" />`;
+  }
+
+  // 生成地点点
+  let regionDots = '';
   REGIONS.forEach((region, idx) => {
-    const rIdx = Math.floor(state.realmIdx / 4);
-    const sIdx = state.realmIdx % 4;
     const unlocked = rIdx > region.minRealm || (rIdx === region.minRealm && sIdx >= region.minStage);
-    html += `<div class="region-card ${unlocked?'':'locked'}" data-idx="${idx}">
-      <div class="region-ascii ${region.color}">${region.ascii}</div>
-      <div class="region-info">
-        <div class="region-name">▸ ${region.name}</div>
-        <div class="region-desc">${region.desc}</div>
-        <div class="region-lv">建议境界: ${realmNames[region.minRealm]}${unlocked?'':' 🔒'}</div>
-      </div>
-    </div>`;
+    const isCurrent = rp.regionId === region.id;
+    const rarityColor = pathColorMap[region.rarity] || '#FFD1DC';
+
+    // 解锁的节点可以进入
+    if (unlocked) {
+      regionDots += `
+        <div class="map-node ${isCurrent?'map-node-current':''}"
+             data-region-id="${region.id}"
+             style="left:${region.x}%;top:${region.y}%">
+          <div class="map-node-pin" style="border-color:${rarityColor};box-shadow:0 0 14px ${rarityColor}80">
+            <span>${region.icon}</span>
+          </div>
+          <div class="map-node-label" style="color:${region.rarity==='legend'?'#FF8C42':region.rarity==='epic'?'#A06BE6':'#333'}">
+            ${region.name}
+          </div>
+        </div>`;
+    } else {
+      regionDots += `
+        <div class="map-node map-node-locked"
+             style="left:${region.x}%;top:${region.y}%">
+          <div class="map-node-pin map-node-locked-pin">
+            <span>🔒</span>
+          </div>
+          <div class="map-node-label map-node-locked-label">
+            ${realmNames[region.minRealm]}${region.minStage>0?'·'+['中','后','圆满'][region.minStage-1]:''}
+          </div>
+        </div>`;
+    }
   });
-  html += '</div>';
-  list.innerHTML = html;
+
+  // 地图 + 选中面板
+  list.innerHTML = `
+    <div class="world-map">
+      <svg class="world-map-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+        ${svgPaths}
+      </svg>
+      ${regionDots}
+    </div>
+    <div id="regionDetailPanel" class="region-detail-panel"></div>
+  `;
+
   // 绑定点击
-  list.querySelectorAll('.region-card:not(.locked)').forEach(card => {
-    card.addEventListener('click', () => enterRegion(REGIONS[parseInt(card.dataset.idx)]));
+  list.querySelectorAll('.map-node[data-region-id]').forEach(node => {
+    node.addEventListener('click', () => {
+      const region = REGIONS.find(r => r.id === node.dataset.regionId);
+      showRegionDetail(region, node);
+    });
   });
+
+  // 如果当前正在探索某个区域，显示详情
+  if (rp.regionId) {
+    const region = REGIONS.find(r => r.id === rp.regionId);
+    if (region) {
+      const node = list.querySelector(`[data-region-id="${region.id}"]`);
+      if (node) showRegionDetail(region, node);
+    }
+  }
+}
+
+function showRegionDetail(region, nodeEl) {
+  const panel = $('regionDetailPanel');
+  if (!panel) return;
+  const realmNames = ['炼气','筑基','金丹','元婴','化神','炼虚','合体','大乘','渡劫','飞升'];
+  const rIdx = Math.floor(state.realmIdx / 4);
+  const sIdx = state.realmIdx % 4;
+  const unlocked = rIdx > region.minRealm || (rIdx === region.minRealm && sIdx >= region.minStage);
+  const isCurrent = (state.regionProgress && state.regionProgress.regionId === region.id);
+
+  const bossCfg = REGION_BOSSES[region.id];
+  const waveCfg = REGION_WAVES[region.id];
+  const enemies = region.enemies.map(id => ENEMIES[id]).filter(Boolean);
+  const enemyPreview = enemies.slice(0, 3).map(e => `${e.emoji}${e.name}`).join(' · ');
+
+  panel.innerHTML = `
+    <div class="region-detail-inner">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="font-size:32px">${region.icon}</div>
+        <div>
+          <div style="font-weight:800;font-size:16px;color:var(--pink-500)">${region.name} ${region.emoji}</div>
+          <div style="font-size:11px;color:var(--text-dim)">
+            建议境界：${realmNames[region.minRealm]}${unlocked?'  ✅':'  🔒'}
+            · 稀有度：<span style="color:${region.rarity==='legend'?'#FF8C42':region.rarity==='epic'?'#A06BE6':'var(--pink-400)'}">${region.rarity==='legend'?'★传说★':region.rarity==='epic'?'史诗':region.rarity==='rare'?'稀有':'普通'}</span>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text);line-height:1.7;margin:6px 0">${region.desc}</div>
+      ${enemies.length ? `
+        <div style="margin:6px 0;font-size:11px;color:var(--text-dim)">
+          <b style="color:var(--blue-400)">⚔️ 敌人：</b>${enemyPreview}
+        </div>
+        <div style="margin:4px 0;font-size:11px;color:var(--text-dim)">
+          <b style="color:var(--gold)">👑 Boss：</b>${bossCfg ? `${bossCfg.emoji} ${bossCfg.name}` : '—'}
+          ${waveCfg && waveCfg.waves ? ` · 波次：${waveCfg.waves}波后Boss` : ''}
+        </div>
+      ` : ''}
+      <div style="margin-top:10px">
+        ${unlocked ? `
+          <button class="btn btn-primary" onclick="enterRegion(REGIONS.find(r=>r.id==='${region.id}'))" ${isCurrent?'disabled':''}>
+            ${isCurrent?'⏳ 正在探索中...':'✨ 进入探索'}
+          </button>
+        ` : '<div style="font-size:12px;color:var(--text-dim)">🔒 境界不足，暂无法进入</div>'}
+      </div>
+    </div>
+  `;
 }
 
 function enterRegion(region) {
@@ -3491,8 +3790,8 @@ const RECIPE_GROUPS = {
   '💎 突破类': ['realm_break', 'lucky'],
 };
 
-function renderCraft() {
-  const content = $('craftContent');
+function renderCraft(contentEl) {
+  const content = contentEl || $('craftContent');
   // 元器件概览（紧凑带tooltip）
   const compsHtml = Object.keys(COMPONENTS).map(id => {
     const c = COMPONENTS[id];
@@ -3521,19 +3820,18 @@ function renderCraft() {
         return `<span class="${enough?'enough':'lack'}">${text}</span>`;
       }).join('');
       const allEnough = Object.entries(r.parts).every(([c,n]) => (state.components[c]||0) >= n);
+      const rarityClass = item.rarity ? `art-${item.rarity} glow-${item.rarity}` : 'art-common glow-common';
+      const rarityBadge = item.rarity === 'legend' ? '★传说★' : item.rarity === 'epic' ? '史诗' : item.rarity === 'rare' ? '稀有' : '普通';
       allRecipesHtml += `
-        <div class="recipe-card-compact ${allEnough?'ready':''}">
-          <div class="recipe-head">
-            <span class="emoji">${item.emoji}</span>
-            <span class="name">${item.name}</span>
-          </div>
-          <div class="recipe-desc-inline">${item.desc}</div>
-          <div class="recipe-parts-inline">${partsHtml}</div>
-          <div class="recipe-btn-wrap">
-            <button class="btn ${allEnough?'btn-primary':'disabled-btn'}" style="padding:5px 10px;font-size:11px;width:100%" onclick="craftRecipe('${r.id}')" ${allEnough?'':'disabled'}>
-              ${allEnough ? '▶ 合成' : '材料不足'}
-            </button>
-          </div>
+        <div class="weapon-art ${rarityClass}" style="margin-bottom:10px;${allEnough?'':'opacity:.75'}">
+          <div class="weapon-art-rarity rarity-badge-${item.rarity || 'common'}">${rarityBadge}</div>
+          <div class="weapon-art-emoji">${item.emoji}</div>
+          <div class="weapon-art-name">${item.name}</div>
+          <div class="weapon-art-desc">${item.desc}</div>
+          <div class="recipe-parts-inline" style="justify-content:center">${partsHtml}</div>
+          <button class="btn ${allEnough?'btn-primary':''}" style="padding:5px 12px;font-size:11px;margin-top:4px" onclick="craftRecipe('${r.id}')" ${allEnough?'':'disabled'}>
+            ${allEnough ? '✨ 合成' : '🔒 材料不足'}
+          </button>
         </div>
       `;
     });
@@ -3699,12 +3997,21 @@ function tryEquip(itemId) {
 let currentBagTab = 'comp';
 function switchBagTab(tab) {
   currentBagTab = tab;
-  document.querySelectorAll('.bag-tab').forEach((b, i) => b.classList.toggle('active', (tab === 'comp' && i === 0) || (tab === 'item' && i === 1)));
+  document.querySelectorAll('.bag-tab').forEach((b, i) => {
+    b.classList.toggle('active', 
+      (tab === 'comp' && i === 0) || 
+      (tab === 'item' && i === 1) || 
+      (tab === 'craft' && i === 2));
+  });
   renderBag();
 }
 
 function renderBag() {
   const content = $('bagContent');
+  if (currentBagTab === 'craft') {
+    renderCraft(content);
+    return;
+  }
   if (currentBagTab === 'comp') {
     // 元器件 Tab
     const comps = Object.keys(COMPONENTS);
