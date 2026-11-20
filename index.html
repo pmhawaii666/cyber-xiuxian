@@ -56,38 +56,33 @@
   }
   .app { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; padding: 16px; }
 
-  /* ========== 顶部状态栏 ========== */
+  /* ========== 顶部状态栏（紧凑版） ========== */
   .header {
     background: linear-gradient(135deg, #111827 0%, #1A2235 100%);
     border: 1px solid var(--border2);
-    border-top: 3px solid var(--blue-500);
-    border-radius: 0 0 12px 12px;
-    padding: 16px;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 20px rgba(22,119,255,0.15), 0 0 60px rgba(22,119,255,0.05);
+    border-top: 2px solid var(--blue-500);
+    border-radius: 0 0 8px 8px;
+    padding: 6px 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(22,119,255,0.12);
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap;
   }
-  .header::before {
-    content: ''; display: block;
-    font-size: 0; height: 0;
-  }
-  .title {
-    font-size: 20px; font-weight: 700;
-    background: linear-gradient(90deg, var(--blue-300) 0%, var(--blue-500) 50%, var(--blue-300) 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    margin-bottom: 12px;
-    letter-spacing: 4px; text-align: center;
-  }
+  .header .title { display: none; } /* 隐藏大标题 */
   .realm-badge {
-    display: inline-block; padding: 4px 14px;
+    display: inline-block; padding: 2px 8px;
     background: rgba(22,119,255,0.12);
     border: 1px solid var(--blue-500);
-    border-radius: 20px;
-    color: var(--blue-300); font-size: 12px; font-weight: 600;
-    margin-bottom: 12px;
+    border-radius: 4px;
+    color: var(--blue-300); font-size: 11px; font-weight: 600;
+    margin-bottom: 0; flex-shrink: 0;
   }
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .stat { font-size: 12px; }
-  .stat-label { color: var(--text-dim); font-size: 11px; font-weight: 500; margin-bottom: 3px; letter-spacing: 0.5px; }
+  .stats-inline { display: flex; gap: 10px; align-items: center; flex: 1; min-width: 0; }
+  .stats-inline .stat { font-size: 11px; flex: 1; min-width: 80px; }
+  .stats-inline .stat-label { color: var(--text-dim); font-size: 9px; letter-spacing: 0.3px; margin-bottom: 1px; }
+  .stats-inline .stat-bar { height: 8px; margin-top: 0; }
+  .stats-inline .stat-text { font-size: 9px; margin-top: 1px; }
+  .profile-btn { flex-shrink: 0; }
 
   /* ========== 示波器风格血条（蓝科技版） ========== */
   .stat-bar {
@@ -286,7 +281,14 @@
   .log-skill { color: var(--blue-300); font-weight: 600; }
   .log-info { color: var(--text-dim); }
   .log-crit { color: #FF4D4F; font-weight: 700; text-shadow: 0 0 8px rgba(255,77,79,0.5); }
-  .battle-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .battle-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .quick-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .battle-quick {
+    padding: 6px 8px; font-size: 11px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 4px;
+    min-width: 0; flex: 1 1 auto; justify-content: center;
+    white-space: nowrap;
+  }
 
   /* 命中特效 */
   .hit-effect {
@@ -803,32 +805,31 @@
 <body>
 <div class="app">
 
-  <!-- 顶部状态栏 -->
+  <!-- 顶部状态栏（紧凑版） -->
   <div class="header">
-    <div class="title">▓▓▓ 赛 博 修 仙 · v2.0 ▓▓▓</div>
-    <div class="realm-badge" id="realmBadge">[ 炼气 · 初阶 ]</div>
-    <button class="profile-btn" onclick="showProfileModal()" title="个人中心">
+    <button class="profile-btn" onclick="showProfileModal()" title="个人中心" style="width:28px;height:28px;font-size:16px">
       <span class="profile-avatar" id="profileAvatar">🧙</span>
     </button>
-    <div class="stats-grid">
+    <div class="realm-badge" id="realmBadge">[炼气·初阶]</div>
+    <div class="stats-inline">
       <div class="stat">
-        <div class="stat-label">▸ 电压 [HP]</div>
+        <div class="stat-label">HP</div>
         <div class="stat-bar"><div class="stat-fill fill-hp" id="hpBar" style="width:100%"></div></div>
-        <div id="hpText" style="font-size:10px;color:#FF7875">100 / 100 V</div>
+        <div id="hpText" class="stat-text" style="color:#FF7875">100/100V</div>
       </div>
       <div class="stat">
-        <div class="stat-label">▸ 电流 [MP]</div>
+        <div class="stat-label">MP</div>
         <div class="stat-bar"><div class="stat-fill fill-mp" id="mpBar" style="width:100%"></div></div>
-        <div id="mpText" style="font-size:10px;color:#69B1FF">50 / 50 A</div>
+        <div id="mpText" class="stat-text" style="color:#69B1FF">50/50A</div>
       </div>
       <div class="stat">
-        <div class="stat-label">▸ 频率 [EXP]</div>
+        <div class="stat-label">EXP</div>
         <div class="stat-bar"><div class="stat-fill fill-xp" id="xpBar" style="width:0%"></div></div>
-        <div id="xpText" style="font-size:10px;color:#FAAD14">0 / 100 Hz</div>
+        <div id="xpText" class="stat-text" style="color:#FAAD14">0/100Hz</div>
       </div>
-      <div class="stat">
-        <div class="stat-label">▸ 灵石 💰</div>
-        <div id="goldText" style="font-size:14px;color:#FAAD14;font-weight:700;margin-top:4px">0</div>
+      <div class="stat" style="min-width:40px;text-align:right">
+        <div class="stat-label">💰</div>
+        <div id="goldText" style="font-size:12px;color:#FAAD14;font-weight:700">0</div>
       </div>
     </div>
   </div>
@@ -842,6 +843,7 @@
     <button class="nav-btn" data-tab="bag">🗄️ 仓库</button>
     <button class="nav-btn" data-tab="shop">🏪 黑市</button>
     <button class="nav-btn" data-tab="cultivate">🧘 修炼</button>
+    <button class="nav-btn" data-tab="quests" id="questNavBtn">📋 任务</button>
   </div>
 
   <!-- 探索面板 -->
@@ -887,6 +889,12 @@
   <div class="panel hidden" id="panel-cultivate" data-header="MEDITATION :: 闭关修炼">
     <h2>▸ 闭关修炼</h2>
     <div id="cultivateContent"></div>
+  </div>
+
+  <!-- 任务面板 -->
+  <div class="panel hidden" id="panel-quests" data-header="QUESTS :: 任务终端">
+    <h2>▸ 修仙任务</h2>
+    <div id="questContent"></div>
   </div>
 
 </div>
@@ -1108,6 +1116,27 @@ const ITEMS = {
   ring_3:  { emoji:'💖', name: '💖 道祖之心',     desc: '全属性+5%',         type: 'accessory', rarity: 'legend', allBonus: 0.05,price: 10000 },
 };
 
+// ========== 任务系统 ==========
+const QUESTS = [
+  // 主线（一次性）
+  { id: 'main_kill3',    type: 'main',      title: '初入赛博世界',      desc: '击败 3 个敌人',              target: { kind:'kill_enemy', count:3 },     reward: { xp:50, gold:50, components:{resistor:5} },  once:true, unlock:{realmIdx:0} },
+  { id: 'main_craft1',   type: 'main',      title: '电路入门',          desc: '合成 1 件装备或道具',        target: { kind:'craft', count:1 },      reward: { gold:80, components:{pcb:1} },      once:true, unlock:{realmIdx:0} },
+  { id: 'main_break',    type: 'main',      title: '突破之路',          desc: '成功突破到筑基期',           target: { kind:'break', count:1 },      reward: { xp:200, gold:200, components:{chip:1} },    once:true, unlock:{realmIdx:0} },
+  { id: 'main_shop1',    type: 'main',      title: '黑市初探',          desc: '在黑市购买任意 1 件物品',    target: { kind:'buy', count:1 },      reward: { gold:100, components:{capacitor:3} }, once:true, unlock:{realmIdx:0} },
+
+  // 每日循环
+  { id: 'daily_kill5',   type: 'daily',     title: '战斗试炼',          desc: '今日击败 5 个敌人',          target: { kind:'kill_enemy', count:5 },     reward: { xp:50, gold:80 } },
+  { id: 'daily_craft2',  type: 'daily',     title: '组装练习',          desc: '今日合成 2 次',              target: { kind:'craft', count:2 },      reward: { gold:50, components:{resistor:3} } },
+  { id: 'daily_buy1',    type: 'daily',     title: '黑市闲逛',          desc: '今日购买 1 件物品',          target: { kind:'buy', count:1 },      reward: { gold:30 } },
+
+  // 成就（累计）
+  { id: 'ach_first_win', type: 'achievement', title: '首战告捷',         desc: '击败第一个敌人',             target: { kind:'kill_enemy', count:1 },     reward: { xp:30 },         once:true },
+  { id: 'ach_kill50',    type: 'achievement', title: '杀戮机器',         desc: '累计击败 50 个敌人',         target: { kind:'kill_enemy', count:50 },    reward: { gold:500 },      once:true },
+  { id: 'ach_kill200',   type: 'achievement', title: '赛博屠戮',         desc: '累计击败 200 个敌人',        target: { kind:'kill_enemy', count:200 },   reward: { gold:2000, components:{chip:5} }, once:true },
+  { id: 'ach_craft20',   type: 'achievement', title: '工匠之魂',         desc: '累计合成 20 次',             target: { kind:'craft', count:20 },     reward: { gold:300, components:{pcb:3} },   once:true },
+  { id: 'ach_break3',    type: 'achievement', title: '破境能手',         desc: '累计突破 3 次境界',          target: { kind:'break', count:3 },      reward: { gold:500 },      once:true },
+];
+
 // ========== 事件 ==========
 const EVENTS = [
   { id: 'merchant', title: '黑市商人', ascii: '  ╔═══════════╗\n  ║  🧔 💰     ║\n  ╚═══════════╝',
@@ -1163,14 +1192,16 @@ let state = {
   components: { resistor: 5, capacitor: 3 },
   equipped: { weapon: null, armor: null, accessory: null },
   learnedSkills: ['bash'],
+  skillBar: [],  // 快捷栏配置，空则自动取前 4 个已学法术
   luckyNextBattle: false,
   currentRegion: null,
   inBattle: false,
   battleState: null,
-  // buffs
   tempAtkMul: 1,
   enemyDebuffs: { hitChance: 1, turns: 0 },
-  stats: { battlesWon: 0, battlesLost: 0, goldEarned: 0, realmBreaks: 0, componentsFound: 0 },
+  stats: { battlesWon: 0, battlesLost: 0, goldEarned: 0, realmBreaks: 0, componentsFound: 0, killsByRegion: {} },
+  quests: {},       // 任务进度
+  lastDailyReset: '', // 每日重置日期
 };
 
 // ========== 存档 ==========
@@ -1233,6 +1264,7 @@ function gainXp(amount) {
     state.xp -= need;
     state.realmIdx++; broke = true;
     state.stats.realmBreaks++;
+    hookQuestProgress('break', 1);  // 任务挂钩
     recalcStats();
     playSFX('levelup');
     for (const sk of SKILLS) {
@@ -1268,19 +1300,20 @@ function updateHeader() {
   recalcStats();
   const rIdx = Math.floor(state.realmIdx / 4);
   const badge = $('realmBadge');
-  badge.textContent = '[ ' + getRealmName() + ' ]';
+  badge.textContent = '[' + getRealmName() + ']';
   badge.dataset.realm = rIdx;
   $('hpBar').style.width = (state.hp / state.maxHp * 100) + '%';
-  $('hpText').textContent = state.hp + ' / ' + state.maxHp + ' V';
+  $('hpText').textContent = state.hp + '/' + state.maxHp + 'V';
   $('mpBar').style.width = (state.mp / state.maxMp * 100) + '%';
-  $('mpText').textContent = state.mp + ' / ' + state.maxMp + ' A';
+  $('mpText').textContent = state.mp + '/' + state.maxMp + 'A';
   const xpNeed = getXpNeeded();
   $('xpBar').style.width = (state.xp / xpNeed * 100) + '%';
-  $('xpText').textContent = state.xp + ' / ' + xpNeed + ' Hz';
+  $('xpText').textContent = state.xp + '/' + xpNeed + 'Hz';
   $('goldText').textContent = state.gold;
-  // 同步顶部个人中心头像
   const pa = document.getElementById('profileAvatar');
   if (pa) pa.textContent = REALM_SPRITES[state.realmIdx] || '🧙';
+  // 任务徽章提示
+  updateQuestBadge();
 }
 
 function showToast(msg) {
@@ -1303,7 +1336,7 @@ function showHitEffect(text, color, x, y) {
 // ========== 标签切换 ==========
 function switchTab(tab) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  ['explore','battle','craft','skills','bag','shop','cultivate'].forEach(p => {
+  ['explore','battle','craft','skills','bag','shop','cultivate','quests'].forEach(p => {
     $('panel-' + p).classList.toggle('hidden', p !== tab);
   });
   if (tab === 'explore') renderRegions();
@@ -1312,6 +1345,7 @@ function switchTab(tab) {
   if (tab === 'bag') renderBag();
   if (tab === 'shop') renderShop();
   if (tab === 'cultivate') renderCultivate();
+  if (tab === 'quests') renderQuests();
   if (tab === 'battle') renderBattlePanel();
 }
 document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
@@ -1357,6 +1391,22 @@ function renderBattlePanel() {
   const enemy = bs.enemy;
   const realmIdx = Math.floor(state.realmIdx / 4);
   const playerSprite = PLAYER_SPRITES[realmIdx];
+
+  // 快捷栏技能：从已学法术里取，最多 4 个
+  const skillBar = (state.skillBar && state.skillBar.length ? state.skillBar : state.learnedSkills).slice(0, 4);
+  const skillBtns = skillBar.map(sid => {
+    const sk = SKILLS.find(s => s.id === sid); if (!sk) return '';
+    const disabled = state.mp < sk.mpCost;
+    return `<button class="btn btn-info battle-quick" ${disabled?'disabled':''} onclick="battleAction('skill','${sid}')" title="${sk.desc||''}">${sk.emoji||'✨'} ${sk.name}<span style="font-size:9px;opacity:.7">${sk.mpCost}A</span></button>`;
+  }).join('');
+
+  // 道具快捷栏：取背包里有数量的消耗品（最多 4 个）
+  const consumables = Object.entries(state.bag).filter(([k,v]) => v > 0 && ITEMS[k] && ITEMS[k].type === 'consumable').slice(0, 4);
+  const itemBtns = consumables.map(([id, qty]) => {
+    const it = ITEMS[id];
+    return `<button class="btn btn-success battle-quick" onclick="battleAction('item','${id}')" title="${it.desc||''}">${it.emoji||'📦'} ${it.name}×${qty}</button>`;
+  }).join('');
+
   content.innerHTML = `
     <div class="battle-arena">
       <div class="combatant player realm-${realmIdx}">
@@ -1376,14 +1426,15 @@ function renderBattlePanel() {
       </div>
     </div>
     <div class="battle-log" id="battleLog">${bs.logs.map(l => `<p class="log-${l.type}">> ${l.text}</p>`).join('')}</div>
+    <!-- 主行动按钮 -->
     <div class="battle-actions">
       <button class="btn btn-danger" onclick="battleAction('attack')">⚔️ ATTACK</button>
-      <button class="btn btn-info" onclick="showSkillMenu()">✨ SKILLS</button>
-      <button class="btn btn-success" onclick="showBattleItemMenu()">📦 ITEMS</button>
       <button class="btn" onclick="battleAction('flee')" style="border-color:#888;color:#888">🏃 FLEE</button>
     </div>
-    <div id="skillMenu" class="hidden" style="margin-top:10px"></div>
-    <div id="itemMenu" class="hidden" style="margin-top:10px"></div>
+    <!-- 法术快捷栏（默认展开） -->
+    ${skillBtns ? `<div class="quick-bar">${skillBtns}</div>` : ''}
+    <!-- 道具快捷栏（默认展开） -->
+    ${itemBtns ? `<div class="quick-bar">${itemBtns}</div>` : ''}
   `;
   $('battleLog').scrollTop = $('battleLog').scrollHeight;
 }
@@ -1938,34 +1989,6 @@ document.addEventListener('keydown', unlockAudio, { once: true });
 // 如果之前已解锁过，预先初始化
 if (localStorage.getItem('xiuxian_audio_unlocked') === '1') _audioUnlocked = true;
 
-function showSkillMenu() {
-  const menu = $('skillMenu'); menu.classList.toggle('hidden');
-  if (menu.classList.contains('hidden')) return;
-  const available = state.learnedSkills.filter(sid => SKILLS.find(s => s.id === sid));
-  menu.innerHTML = available.map(sid => {
-    const sk = SKILLS.find(s => s.id === sid);
-    const disabled = state.mp < sk.mpCost;
-    return `<button class="btn btn-info" ${disabled?'disabled':''} onclick="battleAction('skill','${sid}');hideMenus()">
-      ${sk.name} [${sk.mpCost}MP]
-    </button>`;
-  }).join('') + `<button class="btn" style="border-color:#666;color:#666" onclick="hideMenus()">CANCEL</button>`;
-}
-
-function showBattleItemMenu() {
-  const menu = $('itemMenu'); menu.classList.toggle('hidden');
-  if (menu.classList.contains('hidden')) return;
-  const consumables = Object.keys(state.bag).filter(k => state.bag[k] > 0 && ITEMS[k] && ITEMS[k].type === 'consumable');
-  menu.innerHTML = consumables.length ? consumables.map(id => {
-    const it = ITEMS[id];
-    return `<button class="btn btn-success" onclick="battleAction('item','${id}');hideMenus()">
-      ${it.name} x${state.bag[id]}
-    </button>`;
-  }).join('') : '<div class="empty-hint">无可用道具</div>';
-  menu.innerHTML += `<button class="btn" style="border-color:#666;color:#666" onclick="hideMenus()">CANCEL</button>`;
-}
-
-function hideMenus() { $('skillMenu').classList.add('hidden'); $('itemMenu').classList.add('hidden'); }
-
 function endBattle(won) {
   const bs = state.battleState, enemy = bs.enemy;
   const rewards = { xp: 0, gold: 0, comps: {}, item: null, lostGold: 0 };
@@ -1977,6 +2000,7 @@ function endBattle(won) {
     if (luckyUsed) { xpGain *= 2; goldGain *= 2; state.luckyNextBattle = false; }
     state.gold += goldGain; state.stats.goldEarned += goldGain;
     gainXp(xpGain); state.stats.battlesWon++;
+    hookQuestProgress('kill_enemy', 1);  // 任务挂钩
     playSFX('coin');
     rewards.xp = xpGain; rewards.gold = goldGain;
     // 元器件掉落
@@ -2135,6 +2159,7 @@ function craftRecipe(recipeId) {
     if (state.components[comp] <= 0) delete state.components[comp];
   }
   state.bag[r.result.itemId] = (state.bag[r.result.itemId] || 0) + r.result.qty;
+  hookQuestProgress('craft', 1);  // 任务挂钩
   playSFX('craft');
   showToast(`>> 合成成功! +${ITEMS[r.result.itemId].name}`);
   saveGame(); renderCraft();
@@ -2266,30 +2291,84 @@ function sellItem(itemId) {
 function renderSkills() {
   const list = $('skillList'); list.innerHTML = '';
   if (state.learnedSkills.length === 0) { list.innerHTML = '<div class="empty-hint">无已加载法术</div>'; return; }
+
+  // 确保 skillBar 有效（旧存档兼容）
+  if (!state.skillBar || state.skillBar.length === 0) {
+    state.skillBar = state.learnedSkills.slice(0, 4);
+    saveGame();
+  }
+  // 从 skillBar 移除不存在的法术
+  state.skillBar = state.skillBar.filter(sid => state.learnedSkills.includes(sid));
+
+  const sb = state.skillBar;
   const rIdx = Math.floor(state.realmIdx / 4);
-  let html = '<div class="skill-grid">';
+  let html = '';
+
+  // ===== 快捷栏配置区 =====
+  html += `<div style="border:1px dashed var(--blue-500);border-radius:6px;padding:10px;margin-bottom:10px;background:rgba(22,119,255,0.05)">
+    <div style="font-size:12px;color:#1677FF;font-weight:600;margin-bottom:6px">⚔️ 战斗快捷栏配置（最多 4 个）</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">`;
+  for (let i = 0; i < 4; i++) {
+    const sid = sb[i];
+    if (sid) {
+      const sk = SKILLS.find(s => s.id === sid);
+      html += `<button class="btn btn-info" style="padding:4px 8px;font-size:11px;display:inline-flex;align-items:center;gap:4px" title="点击移除">${sk?.emoji||'✨'} ${sk?.name?.split(' ')[0]} <span style="opacity:.7;margin-left:2px;cursor:pointer" onclick="removeFromSkillBar('${sid}')">✕</span></button>`;
+    } else {
+      html += `<div style="border:1px dashed #555;border-radius:4px;padding:4px 10px;font-size:11px;color:#666">空槽位 ${i+1}</div>`;
+    }
+  }
+  html += `</div><div style="font-size:10px;color:#8B9CB8">点击下方法术卡片的 ⭐ 按钮添加到快捷栏</div></div>`;
+
+  // ===== 已学法术 =====
+  html += `<h3 style="font-size:11px;color:#8B9CB8;margin-bottom:6px">✨ 已学法术 (${state.learnedSkills.length})</h3>`;
+  html += '<div class="skill-grid">';
   html += state.learnedSkills.map(sid => {
     const sk = SKILLS.find(s => s.id === sid);
-    return `<div class="skill-card">
-      <div class="skill-name">▸ ${sk.name}</div>
-      <div class="skill-info">${sk.desc}</div>
-      <div class="skill-cost">消耗: ${sk.mpCost} MP${sk.dmgMul ? ` | x${sk.dmgMul}` : ''}${sk.healMul ? ` | 回HP` : ''}</div>
+    const inBar = sb.includes(sid);
+    const toggle = inBar ? `removeFromSkillBar('${sid}')` : `addToSkillBar('${sid}')`;
+    const starStyle = inBar ? 'color:#FAAD14' : 'color:#666';
+    return `<div class="skill-card ${inBar?'skill-in-bar':''}" style="${inBar?'border-color:#FAAD14;background:rgba(250,173,20,0.08)':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="skill-name">${sk.emoji||'✨'} ${sk.name}</div>
+        <button onclick="${toggle}" style="background:none;border:none;font-size:16px;cursor:pointer;${starStyle}" title="${inBar?'从快捷栏移除':'加入快捷栏'}">${inBar?'★':'☆'}</button>
+      </div>
+      <div class="skill-info" style="font-size:10px;color:#8B9CB8;margin-top:4px">${sk.desc}</div>
+      <div class="skill-cost" style="font-size:10px;margin-top:4px">消耗: ${sk.mpCost}A${sk.dmgMul ? ` | 伤害×${sk.dmgMul}` : ''}${sk.healMul ? ` | 回血×${sk.healMul}` : ''}</div>
     </div>`;
   }).join('');
   html += '</div>';
+
+  // ===== 未解锁法术 =====
   const locked = SKILLS.filter(s => !state.learnedSkills.includes(s.id));
   if (locked.length) {
     const realmNames = ['炼气','筑基','金丹','元婴','化神','炼虚','合体','大乘','渡劫','飞升'];
-    html += `<h3 style="color:#444;font-size:11px;margin-top:14px">🔒 未解锁法术</h3><div class="skill-grid">`;
+    html += `<h3 style="font-size:11px;color:#8B9CB8;margin-top:14px;margin-bottom:6px">🔒 未解锁法术</h3><div class="skill-grid">`;
     locked.forEach(sk => {
       html += `<div class="skill-card locked">
-        <div class="skill-name" style="color:#555">▸ ${sk.name}</div>
-        <div class="skill-info">需要境界: ${realmNames[sk.unlockRealm]}</div>
+        <div class="skill-name" style="color:#666">▸ ${sk.name}</div>
+        <div class="skill-info" style="font-size:10px">需要境界: ${realmNames[sk.unlockRealm]}</div>
       </div>`;
     });
     html += '</div>';
   }
   list.innerHTML = html;
+}
+
+// 快捷栏配置函数
+function addToSkillBar(sid) {
+  if (state.skillBar.includes(sid)) return;
+  if (state.skillBar.length >= 4) { showToast('快捷栏最多 4 个'); return; }
+  state.skillBar.push(sid);
+  playSFX('click');
+  saveGame(); renderSkills();
+  if (state.inBattle) renderBattlePanel();
+}
+
+function removeFromSkillBar(sid) {
+  state.skillBar = state.skillBar.filter(s => s !== sid);
+  playSFX('click');
+  saveGame(); renderSkills();
+  if (state.inBattle) renderBattlePanel();
 }
 
 // ========== 黑市 ==========
@@ -2327,6 +2406,7 @@ function buyItem(itemId) {
   if (state.gold < item.price) { showToast('灵石不足!'); return; }
   state.gold -= item.price;
   state.bag[itemId] = (state.bag[itemId] || 0) + 1;
+  hookQuestProgress('buy', 1);  // 任务挂钩
   showToast('>> 购买 ' + item.name);
   saveGame(); updateHeader(); renderShop();
 }
@@ -2533,15 +2613,21 @@ function init() {
     state.components = { resistor: 5, capacitor: 3 };
     state.bag = { heal_pack: 2, mp_pack: 2 };
     state.gold = 150;
+    initQuests();
     showWelcomeModal();
   } else {
     recalcStats();
-    // 离线闭关结算：如果上次存着离线闭关标记，结算收益
+    if (!state.quests || typeof state.quests !== 'object') state.quests = {};
+    // 每日重置检查
+    resetDailyQuestsIfNeeded();
+    // 确保所有 QUEST 都有状态条目（旧存档兼容）
+    QUESTS.forEach(q => { if (state.quests[q.id] === undefined) state.quests[q.id] = { progress: 0, claimed: false }; });
+    // 离线闭关结算
     const offlineStart = parseInt(localStorage.getItem('xiuxian_cultivate_start') || '0');
     if (offlineStart > 0) {
       const now = Date.now();
-      const elapsedMs = Math.min(now - offlineStart, 24 * 60 * 60 * 1000); // 最多 24 小时
-      const ticks = Math.floor(elapsedMs / 2000); // 2秒一次
+      const elapsedMs = Math.min(now - offlineStart, 24 * 60 * 60 * 1000);
+      const ticks = Math.floor(elapsedMs / 2000);
       if (ticks > 0) {
         const wasFull = JSON.parse(localStorage.getItem('xiuxian_cultivate_wasFull') || 'false');
         if (wasFull) {
@@ -2564,6 +2650,120 @@ function init() {
   updateHeader(); saveGame();
   renderRegions();
 }
+
+// ========== 任务系统 ==========
+function initQuests() {
+  // 新存档：初始化所有任务进度
+  QUESTS.forEach(q => { state.quests[q.id] = { progress: 0, claimed: false }; });
+  state.lastDailyReset = new Date().toDateString();
+}
+
+function resetDailyQuestsIfNeeded() {
+  const today = new Date().toDateString();
+  if (state.lastDailyReset !== today) {
+    QUESTS.forEach(q => {
+      if (q.type === 'daily') state.quests[q.id] = { progress: 0, claimed: false };
+    });
+    state.lastDailyReset = today;
+  }
+}
+
+function hookQuestProgress(kind, amount = 1) {
+  QUESTS.forEach(q => {
+    if (q.target.kind !== kind) return;
+    if (state.quests[q.id]?.claimed) return; // 已领取就不再计数
+    if (q.unlock && q.unlock.realmIdx != null && state.realmIdx < q.unlock.realmIdx) return;
+    // 累计类（成就）和循环类都直接加进度
+    state.quests[q.id] = state.quests[q.id] || { progress: 0, claimed: false };
+    state.quests[q.id].progress += amount;
+    // 达成时弹提示
+    if (state.quests[q.id].progress >= q.target.count && !state.quests[q.id]._notified) {
+      state.quests[q.id]._notified = true;
+      showToast('🎯 任务完成: ' + q.title + ' (去📋领取奖励)');
+      playSFX('levelup');
+    }
+  });
+  updateQuestBadge();
+  saveGame();
+}
+
+function claimQuest(qid) {
+  const q = QUESTS.find(q => q.id === qid); if (!q) return;
+  const qs = state.quests[qid]; if (!qs) return;
+  if (qs.claimed) { showToast('已领取过'); return; }
+  if (qs.progress < q.target.count) { showToast('进度未达成'); return; }
+  // 发放奖励
+  const r = q.reward;
+  if (r.xp) gainXp(r.xp);
+  if (r.gold) { state.gold += r.gold; state.stats.goldEarned += r.gold; }
+  if (r.components) Object.entries(r.components).forEach(([k,v]) => { state.components[k] = (state.components[k]||0) + v; });
+  qs.claimed = true;
+  qs._notified = true;
+  showToast('🎁 领取: ' + q.title);
+  playSFX('coin');
+  updateQuestBadge();
+  updateHeader(); saveGame();
+  renderQuests();
+}
+
+function updateQuestBadge() {
+  const btn = $('questNavBtn');
+  if (!btn) return;
+  if (!state.quests) state.quests = {};
+  const canClaim = QUESTS.some(q => {
+    const qs = state.quests[q.id];
+    return qs && !qs.claimed && qs.progress >= q.target.count;
+  });
+  btn.innerHTML = canClaim ? '📋 <span style="background:#FF4D4F;color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;display:inline-block;min-width:14px;text-align:center">!</span>' : '📋';
+}
+
+function renderQuests() {
+  const c = $('questContent'); if (!c) return;
+  // 按类型分组
+  const groups = { main:'🔴 主线任务', daily:'🟡 每日任务', achievement:'🏆 成就' };
+  let html = '';
+  Object.entries(groups).forEach(([type, label]) => {
+    const quests = QUESTS.filter(q => q.type === type);
+    if (!quests.length) return;
+    html += `<h3 style="margin-top:10px;margin-bottom:6px;color:#1677FF">${label}</h3>`;
+    quests.forEach(q => {
+      const qs = state.quests[q.id] || { progress: 0, claimed: false };
+      const progress = Math.min(qs.progress, q.target.count);
+      const percent = Math.floor(progress / q.target.count * 100);
+      const canClaim = !qs.claimed && qs.progress >= q.target.count;
+      const locked = q.unlock && q.unlock.realmIdx != null && state.realmIdx < q.unlock.realmIdx;
+      const rewardStr = Object.entries(q.reward).map(([k,v]) => {
+        if (k === 'xp') return `+${v}Hz`;
+        if (k === 'gold') return `+💰${v}`;
+        if (k === 'components') return Object.entries(v).map(([ck,cv]) => `+${cv}×${ck}`).join(' ');
+        return k;
+      }).join(' ');
+      html += `
+        <div style="border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:6px;${locked?'opacity:0.5':''}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-weight:600;font-size:12px">${locked?'🔒 ':''}${q.title}</div>
+              <div style="color:#8B9CB8;font-size:10px">${q.desc}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;color:#FAAD14">奖励: ${rewardStr}</div>
+              ${qs.claimed
+                ? '<span style="font-size:10px;color:#52C41A">✓ 已领取</span>'
+                : canClaim
+                  ? `<button class="btn btn-success" style="padding:4px 10px;font-size:10px" onclick="claimQuest('${q.id}')">领取</button>`
+                  : `<span style="font-size:10px;color:#8B9CB8">${progress}/${q.target.count}</span>`
+              }
+            </div>
+          </div>
+          <div class="stat-bar" style="margin-top:6px;height:6px"><div class="stat-fill fill-xp" style="width:${percent}%"></div></div>
+        </div>
+      `;
+    });
+  });
+  if (!html) html = '<div class="empty-hint">暂无任务</div>';
+  c.innerHTML = html;
+}
+
 init();
 setInterval(saveGame, 30000);
 </script>
