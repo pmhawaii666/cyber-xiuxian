@@ -667,6 +667,20 @@
     100% { opacity: 0; transform: scale(0.2) rotate(45deg); filter: grayscale(1); }
   }
 
+  /* 波次过渡闪光条 */
+  @keyframes waveFlash {
+    0% { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.8); }
+    20% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.1); }
+    40% { transform: translateX(-50%) translateY(0) scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.9); }
+  }
+  @keyframes fadeDarker {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
   /* 暴击标记 */
   .crit-mark {
     position: absolute; left: 50%; top: 10%;
@@ -1073,6 +1087,116 @@ const ENEMIES = {
   final_demon:   {name: '终极心魔', hp: 55000,atk: 3200,def: 1600,emoji: '😇', xp: 120000,gold: [20000,30000],drops: { cpu: [5,10], chip: [10,20] } },
 };
 
+// ========== 区域波次 & Boss 专属数据 ==========
+// wave 敌人列表按波次顺序，scale 每波递增 15%
+const REGION_WAVES = {
+  ruin:        { waves: 3, enemyPool: ['ai_scout','glitch_rat','broken_drone'] },
+  circuit:     { waves: 4, enemyPool: ['circuit_worm','chip_goblin','fuse_imp','glitch_rat'] },
+  memory:      { waves: 4, enemyPool: ['ram_ghost','bit_hunter','data_shade'] },
+  battery_sea: { waves: 5, enemyPool: ['electro_fish','acid_slime','leech_tank','broken_drone'] },
+  deep_web:    { waves: 5, enemyPool: ['cyber_ghost','virus_spirit','net_demon','bit_hunter'] },
+  cpu_core:    { waves: 6, enemyPool: ['overclock_beast','heat_wraith','bios_boss'] },
+  void_station:{ waves: 6, enemyPool: ['void_pirate','cyber_dragon','void_master'] },
+  ascension:   { waves: 0, enemyPool: [] }, // 飞升之门直接 Boss
+};
+
+// 每个区域的专属 Boss
+const REGION_BOSSES = {
+  ruin: {
+    name: '失控 AI 群', emoji: '🧟',
+    hp: 80, atk: 15, def: 5,
+    desc: '三只失控 AI 群魔乱舞，每击杀一只剩余伤害 +20%',
+    equipDrop: { items: ['sword_1b'], chance: 0.5 },  // 概率掉电路匕首
+    phases: [
+      { hpPct: 1.0, atkMul: 1.0 },
+      { hpPct: 0.66, atkMul: 1.2, log: '一只 AI 倒下了！剩余 AI 暴走！' },
+      { hpPct: 0.33, atkMul: 1.5, log: '两只 AI 倒下了！最后一只疯狂反扑！' },
+    ],
+    mechanic: 'shared_hp',
+  },
+  circuit: {
+    name: '熔丝领主', emoji: '🔥',
+    hp: 150, atk: 25, def: 12,
+    desc: '血量 20% 以下触发熔断自爆，需要散热片压制',
+    equipDrop: { items: ['armor_1b', 'ring_2b'], chance: [0.4, 0.25] },  // 阻流背心 + 超频芯片
+    phases: [
+      { hpPct: 1.0, atkMul: 1.0 },
+      { hpPct: 0.20, atkMul: 1.3, log: '⚠️ 熔丝领主开始过热！准备自爆！', special: 'self_destruct' },
+    ],
+    mechanic: 'self_destruct',
+  },
+  memory: {
+    name: '数据幽灵王', emoji: '👻',
+    hp: 300, atk: 40, def: 18,
+    desc: '三阶段：正常 → 虚化（普攻不中） → 疯狂回复',
+    equipDrop: { items: ['ring_2'], chance: 0.7 },  // 天眼护符
+    phases: [
+      { hpPct: 1.0, atkMul: 1.0 },
+      { hpPct: 0.60, atkMul: 1.0, log: '幽灵王虚化！普通攻击无法命中！需要二极管穿透！', special: 'evade' },
+      { hpPct: 0.30, atkMul: 1.1, log: '幽灵王疯狂回复！需要芯片穿透破回复！', special: 'regenerate' },
+    ],
+    mechanic: 'phase_evade',
+  },
+  battery_sea: {
+    name: '电鳗之龙', emoji: '🐉',
+    hp: 500, atk: 60, def: 30,
+    desc: '每 3 回合充能完毕释放全屏电流，电阻可吸收',
+    equipDrop: { items: ['sword_2b', 'armor_2'], chance: [0.35, 0.3] },  // 等离子步枪 + 合金护甲
+    phases: [
+      { hpPct: 1.0, atkMul: 1.0 },
+    ],
+    mechanic: 'charge_strike',
+    chargeTurns: 3,
+  },
+  deep_web: {
+    name: '网络恶魔王', emoji: '😈',
+    hp: 700, atk: 85, def: 40,
+    desc: '血量越高伤害越高，血量越低越虚弱',
+    equipDrop: { items: ['sword_2', 'armor_3'], chance: [0.45, 0.2] },  // 灵能长剑 + 量子圣袍
+    phases: [
+      { hpPct: 1.0, atkMul: 1.3 },
+      { hpPct: 0.50, atkMul: 1.0, log: '恶魔王被削弱了！伤害降低！' },
+      { hpPct: 0.20, atkMul: 0.8, log: '恶魔王奄奄一息！全力一击！' },
+    ],
+    mechanic: 'hp_atk_link',
+  },
+  cpu_core: {
+    name: '超频巨兽', emoji: '💢',
+    hp: 1200, atk: 110, def: 55,
+    desc: '50% 血量进入超频，伤害翻倍但每回合掉血',
+    equipDrop: { items: ['sword_3'], chance: 0.55 },  // 虚空斩
+    phases: [
+      { hpPct: 1.0, atkMul: 1.0 },
+      { hpPct: 0.50, atkMul: 2.0, log: '⚠️ 超频巨兽进入狂暴！伤害翻倍但每回合掉血！', special: 'overclock' },
+    ],
+    mechanic: 'overclock',
+  },
+  void_station: {
+    name: '虚空领主', emoji: '👑',
+    hp: 2000, atk: 180, def: 85,
+    desc: '召唤虚空海盗助战，必须先清小弟不然 Boss 回血',
+    equipDrop: { items: ['armor_4'], chance: 0.7 },  // 飞升法衣
+    phases: [
+      { hpPct: 1.0, atkMul: 1.0 },
+      { hpPct: 0.70, atkMul: 1.0, log: '虚空领主召唤小弟！', special: 'summon' },
+      { hpPct: 0.40, atkMul: 1.0, log: '虚空领主再次召唤！', special: 'summon' },
+    ],
+    mechanic: 'summon',
+  },
+  ascension: {
+    name: 'AI 主神', emoji: '👑',
+    hp: 40000, atk: 2800, def: 1400,
+    desc: '最终战！三阶段：正常 → 狂暴 → 飞升倒计时',
+    equipDrop: { items: ['sword_4', 'armor_4', 'ring_3'], chance: [1, 0.5, 0.3] },  // 飞升之剑100% + 飞升法衣50% + 道祖之心30%
+    phases: [
+      { hpPct: 1.0, atkMul: 1.0 },
+      { hpPct: 0.60, atkMul: 1.3, log: 'AI 主神启动狂暴协议！' },
+      { hpPct: 0.30, atkMul: 1.5, log: 'AI 主神开始飞升倒计时！3 回合内击杀！', special: 'countdown' },
+    ],
+    mechanic: 'final_boss',
+  },
+};
+
 // ========== 电子法术 ==========
 const SKILLS = [
   { id: 'bash',       name: '⚔️ 数据斩',     desc: '发射数据刃攻击敌人',       mpCost: 5,  dmgMul: 1.5, unlockRealm: 0, unlockStage: 0 },
@@ -1096,24 +1220,94 @@ const ITEMS = {
   mp_pack:     { emoji:'🔋', name: '🔋 灵力电池',   desc: '恢复50%电流[MP]', type: 'consumable', rarity: 'common', mpPercent: 0.5, price: 40 },
   realm_break: { emoji:'💎', name: '💎 破境丹',     desc: '帮助突破境界',       type: 'consumable', rarity: 'epic', breakChance: 1, price: 2000 },
   lucky_charm: { emoji:'🍀', name: '🍀 好运符箓',   desc: '下一场战斗双倍奖励', type: 'consumable', rarity: 'rare', lucky: true, price: 200 },
-  // 武器 (6种)
-  sword_1: { emoji:'🗡️', name: '🗡️ 数据刃·初',   desc: '攻击+15',  type: 'weapon', rarity: 'common', atkBonus: 15,  price: 150 },
-  sword_1b:{ emoji:'🔪', name: '🔪 电路匕首',     desc: '攻击+25, 暴击+5%', type: 'weapon', rarity: 'common', atkBonus: 25, critBonus: 0.05, price: 200 },
-  sword_2: { emoji:'⚔️', name: '⚔️ 灵能长剑',     desc: '攻击+50',  type: 'weapon', rarity: 'rare',   atkBonus: 50,  price: 800 },
-  sword_2b:{ emoji:'🔫', name: '🔫 等离子步枪',   desc: '攻击+60, 攻击范围+10%', type: 'weapon', rarity: 'rare', atkBonus: 60, price: 1200 },
-  sword_3: { emoji:'🌙', name: '🌙 虚空斩',       desc: '攻击+200', type: 'weapon', rarity: 'epic',   atkBonus: 200, price: 3000 },
-  sword_4: { emoji:'🌈', name: '🌈 飞升之剑',     desc: '攻击+800', type: 'weapon', rarity: 'legend', atkBonus: 800, price: 20000 },
+  // 武器 (6种) — 全部带被动特效
+  sword_1: { emoji:'🗡️', name: '🗡️ 数据刃·初',   desc: '攻击+15',         type: 'weapon', rarity: 'common', atkBonus: 15,  price: 150,
+    passive: null },
+  sword_1b:{ emoji:'🔪', name: '🔪 电路匕首',     desc: '攻击+25,暴击+5%\n暴击附带流血(下回合10%攻击力额外伤害)', type: 'weapon', rarity: 'common', atkBonus: 25, critBonus: 0.05, price: 200,
+    passive: { critBleed: { bleedPct: 0.10 } } },
+  sword_2: { emoji:'⚔️', name: '⚔️ 灵能长剑',     desc: '攻击+50\n15%概率附加信号干扰(敌人下回合命中-30%)', type: 'weapon', rarity: 'rare',   atkBonus: 50,  price: 800,
+    passive: { signalJammer: { chance: 0.15, duration: 1, missPct: 0.30 } } },
+  sword_2b:{ emoji:'🔫', name: '🔫 等离子步枪',   desc: '攻击+60,法术伤害+20%', type: 'weapon', rarity: 'rare', atkBonus: 60, price: 1200,
+    passive: { skillDmgMul: 1.20 } },
+  sword_3: { emoji:'🌙', name: '🌙 虚空斩',       desc: '攻击+200\n暴击时30%概率额外释放50%威力的虚空波纹', type: 'weapon', rarity: 'epic',   atkBonus: 200, price: 3000,
+    passive: { critExtraHit: { chance: 0.30, mul: 0.50 } } },
+  sword_4: { emoji:'🌈', name: '🌈 飞升之剑',     desc: '攻击+800\n攻击有20%概率触发雷击(真实伤害=攻击力50% 无视防御)', type: 'weapon', rarity: 'legend', atkBonus: 800, price: 20000,
+    passive: { thunderStrike: { chance: 0.20, realDmgPct: 0.50 } } },
   // 护甲 (5种)
-  armor_1: { emoji:'🛡️', name: '🛡️ 轻量护盾',     desc: '防御+10, 生命+50',   type: 'armor', rarity: 'common', defBonus: 10, hpBonus: 50,   price: 120 },
-  armor_1b:{ emoji:'🦺', name: '🦺 阻流背心',     desc: '防御+20, 减伤5%',   type: 'armor', rarity: 'common', defBonus: 20, dmgReduce: 0.05, price: 180 },
-  armor_2: { emoji:'🦾', name: '🦾 合金护甲',     desc: '防御+40, 生命+200', type: 'armor', rarity: 'rare',   defBonus: 40, hpBonus: 200,  price: 600 },
-  armor_3: { emoji:'👘', name: '👘 量子圣袍',     desc: '防御+150, 生命+800',type: 'armor', rarity: 'epic',   defBonus: 150,hpBonus: 800,  price: 2500 },
-  armor_4: { emoji:'✨', name: '✨ 飞升法衣',     desc: '防御+500, 生命+3000',type:'armor', rarity:'legend', defBonus: 500,hpBonus: 3000,price: 15000 },
+  armor_1: { emoji:'🛡️', name: '🛡️ 轻量护盾',     desc: '防御+10,生命+50',       type: 'armor', rarity: 'common', defBonus: 10, hpBonus: 50,   price: 120,
+    passive: null },
+  armor_1b:{ emoji:'🦺', name: '🦺 阻流背心',     desc: '防御+20,减伤5%',       type: 'armor', rarity: 'common', defBonus: 20, dmgReduce: 0.05, price: 180,
+    passive: null },
+  armor_2: { emoji:'🦾', name: '🦾 合金护甲',     desc: '防御+40,生命+200\n受击10%概率反弹20%伤害', type: 'armor', rarity: 'rare',   defBonus: 40, hpBonus: 200,  price: 600,
+    passive: { reflect: { chance: 0.10, reflectPct: 0.20 } } },
+  armor_3: { emoji:'👘', name: '👘 量子圣袍',     desc: '防御+150,生命+800\nHP<30%自动耗1电容回复30%HP(冷却5回合)', type: 'armor', rarity: 'epic',   defBonus: 150,hpBonus: 800,  price: 2500,
+    passive: { autoHeal: { hpThreshold: 0.30, healPct: 0.30, costComp: 'capacitor', costQty: 1, cooldown: 5 } } },
+  armor_4: { emoji:'✨', name: '✨ 飞升法衣',     desc: '防御+500,生命+3000\n致命伤害保留1HP(每BOSS战限一次)', type:'armor', rarity:'legend', defBonus: 500,hpBonus: 3000,price: 15000,
+    passive: { deathDefy: { oncePerBoss: true } } },
   // 饰品 (4种)
-  ring_1:  { emoji:'💍', name: '💍 灵石戒指',     desc: '灵石获取+20%',      type: 'accessory', rarity: 'common', goldBonus: 0.2, price: 200 },
-  ring_2:  { emoji:'👁️', name: '👁️ 天眼护符',     desc: '战斗经验+30%',      type: 'accessory', rarity: 'rare',   xpBonus: 0.3,  price: 800 },
-  ring_2b: { emoji:'🧠', name: '🧠 超频芯片',     desc: 'MP上限+20%',        type: 'accessory', rarity: 'rare',   mpBonus: 0.2,  price: 900 },
-  ring_3:  { emoji:'💖', name: '💖 道祖之心',     desc: '全属性+5%',         type: 'accessory', rarity: 'legend', allBonus: 0.05,price: 10000 },
+  ring_1:  { emoji:'💍', name: '💍 灵石戒指',     desc: '灵石获取+20%',         type: 'accessory', rarity: 'common', goldBonus: 0.2, price: 200,
+    passive: null },
+  ring_2:  { emoji:'👁️', name: '👁️ 天眼护符',     desc: '战斗经验+30%',         type: 'accessory', rarity: 'rare',   xpBonus: 0.3,  price: 800,
+    passive: null },
+  ring_2b: { emoji:'🧠', name: '🧠 超频芯片',     desc: 'MP上限+20%\n每3回合自动耗1晶体管(下次法术×1.5)', type: 'accessory', rarity: 'rare',   mpBonus: 0.2,  price: 900,
+    passive: { autoAmplify: { turns: 3, costComp: 'transistor', costQty: 1, buffSkillMul: 1.5 } } },
+  ring_3:  { emoji:'💖', name: '💖 道祖之心',     desc: '全属性+5%\n所有自损技能不再自损', type: 'accessory', rarity: 'legend', allBonus: 0.05,price: 10000,
+    passive: { noSelfDamage: true } },
+};
+
+// ========== 战斗中元器件消耗效果 ==========
+// 每个元器件在战斗中消耗 1 个，触发对应主动效果（全部从物理特性推导）
+const BATTLE_COMPONENT_ACTIONS = {
+  resistor: {
+    name: '限流护盾', emoji: '🟫',
+    desc: '消耗 1 电阻 · 下一次受到的伤害 -40%',
+    effect: 'shield',
+  },
+  capacitor: {
+    name: '瞬放电流', emoji: '🔵',
+    desc: '消耗 1 电容 · 恢复 30% MP（战斗中额外行动）',
+    effect: 'mp', mpPercent: 0.3,
+  },
+  diode: {
+    name: '单向聚焦', emoji: '🟨',
+    desc: '消耗 1 二极管 · 下一次攻击必定暴击（伤害 ×2.5）',
+    effect: 'crit',
+  },
+  transistor: {
+    name: '信号放大', emoji: '🟪',
+    desc: '消耗 1 晶体管 · 下一次法术伤害 ×1.5',
+    effect: 'spell_mul', mul: 1.5,
+  },
+  chip: {
+    name: '核心穿透', emoji: '🔴',
+    desc: '消耗 1 芯片 · 对敌人造成 15% 最大HP 真实伤害（无视防御）',
+    effect: 'true_dmg', hpPercent: 0.15,
+  },
+  cpu: {
+    name: '超频一击', emoji: '🧠',
+    desc: '消耗 1 CPU · 立即发动超频一击（×4伤害，自损5%HP）',
+    effect: 'overclock', dmgMul: 4, selfDmgPercent: 0.05,
+  },
+  ram: {
+    name: '应急补给', emoji: '📦',
+    desc: '消耗 1 内存条 · 恢复 25% HP',
+    effect: 'heal', hpPercent: 0.25,
+  },
+  heatsink: {
+    name: '散热稳定', emoji: '❄️',
+    desc: '消耗 1 散热片 · 清除敌方增益 + 自身恢复 15% MP',
+    effect: 'cool', mpPercent: 0.15,
+  },
+  battery: {
+    name: '持续续航', emoji: '🔋',
+    desc: '消耗 1 电池 · 恢复 35% HP + 25% MP',
+    effect: 'dual_heal', hpPercent: 0.35, mpPercent: 0.25,
+  },
+  pcb: {
+    name: '强化基底', emoji: '🟩',
+    desc: '消耗 1 PCB · 防御 +30% 持续 3 回合',
+    effect: 'def_buff', defMul: 1.3, turns: 3,
+  },
 };
 
 // ========== 任务系统 ==========
@@ -1191,6 +1385,12 @@ let state = {
   bag: { heal_pack: 2, mp_pack: 2 },
   components: { resistor: 5, capacitor: 3 },
   equipped: { weapon: null, armor: null, accessory: null },
+  equipEnhance: { weapon: 0, armor: 0, accessory: 0 },  // 强化等级 0-10
+  equipRuntime: {  // 战斗中装备特效的运行时状态
+    reflectCd: 0, autoHealCd: 0, autoAmplifyCountdown: 0,
+    deathDefyUsed: false, pendingBleed: 0, pendingAmplifyBuff: 0,
+    jammerApplied: 0,  // 敌人被信号干扰的剩余回合
+  },
   learnedSkills: ['bash'],
   skillBar: [],  // 快捷栏配置，空则自动取前 4 个已学法术
   luckyNextBattle: false,
@@ -1202,6 +1402,18 @@ let state = {
   stats: { battlesWon: 0, battlesLost: 0, goldEarned: 0, realmBreaks: 0, componentsFound: 0, killsByRegion: {} },
   quests: {},       // 任务进度
   lastDailyReset: '', // 每日重置日期
+  // ===== 波次 & Boss 状态 =====
+  regionProgress: null,    // null 或 { regionId, waveIdx, totalWaves, isBossPhase: false }
+  bossMechanics: null,     // Boss 专属运行时状态 { phaseIdx, chargeCount, etc. }
+  // ===== 元器件消耗 pending buff（已有） =====
+  pendingShield: null,
+  pendingCrit: false,
+  pendingSpellMul: 1,
+  pendingDefMul: 1,
+  pendingDefTurns: 0,
+  // ===== 自动战斗状态 =====
+  autoBattle: false,       // 是否开启自动战斗（一直开着，跨波次保持）
+  autoTimer: null,         // 自动战斗的 setTimeout id
 };
 
 // ========== 存档 ==========
@@ -1223,24 +1435,39 @@ function recalcStats() {
   let baseAtk = Math.floor(REALM_BASE_ATK[rIdx] * stageMul);
   let baseDef = Math.floor(REALM_BASE_DEF[rIdx] * stageMul);
   let hpBonus = 0, atkBonus = 0, defBonus = 0;
-  let goldBonus = 0, xpBonus = 0, allBonus = 0;
+  let goldBonus = 0, xpBonus = 0, allBonus = 0, mpBonus = 0, dmgReduceBonus = 0, critBonus = 0;
+  // 统一收集所有装备的被动特效到 equipEffects
+  state.equipEffects = { skillDmgMul: 1, reflect: null, autoHeal: null, deathDefy: null,
+    autoAmplify: null, noSelfDamage: false, critBleed: null, signalJammer: null,
+    critExtraHit: null, thunderStrike: null };
   for (const slot of ['weapon','armor','accessory']) {
     const item = ITEMS[state.equipped[slot]];
+    const enhanceLv = state.equipEnhance[slot] || 0;
+    const enhanceMul = 1 + enhanceLv * 0.12;  // 每级 +12%，+10 时 = 2.2x
     if (item) {
-      hpBonus += item.hpBonus || 0; atkBonus += item.atkBonus || 0;
-      defBonus += item.defBonus || 0;
-      goldBonus += item.goldBonus || 0; xpBonus += item.xpBonus || 0;
+      hpBonus += (item.hpBonus || 0) * enhanceMul;
+      atkBonus += (item.atkBonus || 0) * enhanceMul;
+      defBonus += (item.defBonus || 0) * enhanceMul;
+      goldBonus += item.goldBonus || 0;
+      xpBonus += item.xpBonus || 0;
       allBonus += item.allBonus || 0;
+      mpBonus += item.mpBonus || 0;
+      dmgReduceBonus += item.dmgReduce || 0;
+      critBonus += item.critBonus || 0;
+      // 收集被动特效
+      if (item.passive) Object.assign(state.equipEffects, item.passive);
     }
   }
   state.maxHp = Math.floor((baseMaxHp + hpBonus) * (1 + allBonus));
   state.atk = Math.floor((baseAtk + atkBonus) * (1 + allBonus));
   state.def = Math.floor((baseDef + defBonus) * (1 + allBonus));
-  state.maxMp = Math.floor(state.maxHp * 0.5);
+  state.maxMp = Math.floor(state.maxHp * 0.5 * (1 + mpBonus));
   state.hp = Math.min(state.hp || state.maxHp, state.maxHp);
   state.mp = Math.min(state.mp || state.maxMp, state.maxMp);
   state.goldBonus = goldBonus + allBonus;
   state.xpBonus = xpBonus + allBonus;
+  state.critBonus = critBonus;
+  state.dmgReduceBonus = dmgReduceBonus;
 }
 
 function getRealmName() {
@@ -1378,9 +1605,144 @@ function renderRegions() {
 
 function enterRegion(region) {
   state.currentRegion = region;
-  const rand = Math.random();
-  if (rand < 0.7) startBattle(region);
-  else triggerEvent();
+  const regionKey = region.id;
+
+  // 初始化波次进度
+  if (regionKey === 'ascension') {
+    // 飞升之门直接最终 Boss
+    state.regionProgress = { regionId: regionKey, waveIdx: 0, totalWaves: 0, isBossPhase: true };
+    launchBoss(regionKey, region);
+    return;
+  }
+
+  const waveCfg = REGION_WAVES[regionKey];
+  state.regionProgress = {
+    regionId: regionKey,
+    waveIdx: 0,
+    totalWaves: waveCfg.waves,
+    isBossPhase: false,
+  };
+
+  // 区域进入过场 + 0.8 秒后开第一波
+  showWaveFlash(`🏚️ 进入 ${region.name}`, '开始清理区域...');
+  setTimeout(() => launchNextWave(region), 800);
+}
+
+// ========== 波次过渡闪光条 ==========
+function showWaveFlash(title, sub, color = 'blue') {
+  const overlay = document.createElement('div');
+  const bg = color === 'red'
+    ? 'linear-gradient(90deg, rgba(255,77,79,0.1) 0%, rgba(255,77,79,0.5) 50%, rgba(255,77,79,0.1) 100%)'
+    : 'linear-gradient(90deg, rgba(22,119,255,0.1) 0%, rgba(22,119,255,0.5) 50%, rgba(22,119,255,0.1) 100%)';
+  overlay.innerHTML = `
+    <div style="position:fixed;top:30%;left:50%;transform:translateX(-50%);z-index:9999;text-align:center;pointer-events:none">
+      <div style="background:${bg};padding:20px 60px;border-radius:10px;border:2px solid ${color==='red'?'#FF4D4F':'#1677FF'};box-shadow:0 0 40px ${color==='red'?'#FF4D4F':'#1677FF'};backdrop-filter:blur(6px);animation:waveFlash 0.8s ease-out forwards">
+        <div style="font-size:22px;font-weight:800;color:#fff;letter-spacing:3px;text-shadow:0 0 20px currentColor">${title}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:6px;letter-spacing:1px">${sub}</div>
+      </div>
+    </div>
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:9998;pointer-events:none;animation:fadeDarker 0.8s ease-out forwards"></div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.remove(), 900);
+}
+
+// ========== 波次循环核心 ==========
+function launchNextWave(region) {
+  const rp = state.regionProgress;
+  const regionKey = rp.regionId;
+
+  if (rp.isBossPhase) { launchBoss(regionKey, region); return; }
+
+  // 所有波次清完 → 进入 Boss 阶段
+  if (rp.waveIdx >= rp.totalWaves) {
+    rp.isBossPhase = true;
+    showWaveFlash('⚠️ Boss 来袭！', `${region.name} 的守护者现身！`, 'red');
+    setTimeout(() => launchBoss(regionKey, region), 1200);
+    return;
+  }
+
+  // 从敌人池随机选一个敌人，每波 scale +15%
+  const waveCfg = REGION_WAVES[regionKey];
+  const enemyKey = waveCfg.enemyPool[Math.floor(Math.random() * waveCfg.enemyPool.length)];
+  const waveScale = 1 + rp.waveIdx * 0.15;
+
+  showWaveFlash(`⚡ 第 ${rp.waveIdx + 1}/${rp.totalWaves} 波`, `敌人强度 ×${waveScale.toFixed(2)}`);
+  setTimeout(() => startWaveBattle(region, enemyKey, waveScale), 400);
+}
+
+function launchBoss(regionKey, region) {
+  const bossCfg = REGION_BOSSES[regionKey];
+  const rIdx = Math.floor(state.realmIdx / 4);
+  const scale = 1 + rIdx * 0.2;
+
+  const boss = {
+    ...bossCfg,
+    emoji: bossCfg.emoji,
+    hp: Math.floor(bossCfg.hp * scale),
+    maxHp: Math.floor(bossCfg.hp * scale),
+    atk: Math.floor(bossCfg.atk * scale),
+    def: Math.floor(bossCfg.def * scale),
+    currentHp: Math.floor(bossCfg.hp * scale),
+    isBoss: true,
+    regionId: regionKey,
+    // Boss 奖励单独给：保底金色元器件
+    bossRewards: { gold: bossCfg.hp * 3, chip: [2, 4], pcb: [1, 2] },
+  };
+
+  state.inBattle = true;
+  state.tempAtkMul = 1;
+  state.enemyDebuffs = { hitChance: 1, turns: 0 };
+  // 重置所有元器件消耗 buff
+  state.pendingShield = null; state.pendingCrit = false;
+  state.pendingSpellMul = 1; state.pendingDefMul = 1; state.pendingDefTurns = 0;
+  // Boss 专属状态
+  state.bossMechanics = {
+    phaseIdx: 0,
+    chargeCount: 0,
+    summonCD: 0,
+    countdownTurns: 0,
+    overclockDamagePerTurn: Math.floor(boss.maxHp * 0.03),
+  };
+  state.battleState = {
+    enemy: boss,
+    logs: [{ type: 'info', text: `⚠️ ${boss.emoji} ${boss.name} 现身！${boss.desc}` }],
+  };
+  resetEquipRuntime();
+  switchTab('battle');
+  maybeAutoBattleTakeover();
+}
+
+function startWaveBattle(region, enemyKey, waveScale) {
+  const baseEnemy = ENEMIES[enemyKey];
+  const rIdx = Math.floor(state.realmIdx / 4);
+  const scale = 1 + rIdx * 0.2;
+  const enemy = {
+    ...baseEnemy,
+    hp: Math.floor(baseEnemy.hp * scale * waveScale),
+    maxHp: Math.floor(baseEnemy.hp * scale * waveScale),
+    atk: Math.floor(baseEnemy.atk * scale * waveScale),
+    def: Math.floor(baseEnemy.def * scale * waveScale),
+    currentHp: Math.floor(baseEnemy.hp * scale * waveScale),
+    isBoss: false,
+  };
+  state.inBattle = true;
+  state.tempAtkMul = 1;
+  state.enemyDebuffs = { hitChance: 1, turns: 0 };
+  state.pendingShield = null; state.pendingCrit = false;
+  state.pendingSpellMul = 1; state.pendingDefMul = 1; state.pendingDefTurns = 0;
+  state.bossMechanics = null;
+  state.battleState = {
+    enemy,
+    logs: [{ type: 'info', text: `遭遇 ${enemy.emoji} ${enemy.name}！（第 ${state.regionProgress.waveIdx + 1}/${state.regionProgress.totalWaves} 波）` }],
+  };
+  resetEquipRuntime();
+  switchTab('battle');
+  maybeAutoBattleTakeover();
+}
+function startBattle(region, enemyScale = 1) {
+  state.currentRegion = region;
+  launchNextWave(region);
 }
 
 // ========== 战斗 ==========
@@ -1400,15 +1762,62 @@ function renderBattlePanel() {
     return `<button class="btn btn-info battle-quick" ${disabled?'disabled':''} onclick="battleAction('skill','${sid}')" title="${sk.desc||''}">${sk.emoji||'✨'} ${sk.name}<span style="font-size:9px;opacity:.7">${sk.mpCost}A</span></button>`;
   }).join('');
 
-  // 道具快捷栏：取背包里有数量的消耗品（最多 4 个）
-  const consumables = Object.entries(state.bag).filter(([k,v]) => v > 0 && ITEMS[k] && ITEMS[k].type === 'consumable').slice(0, 4);
-  const itemBtns = consumables.map(([id, qty]) => {
-    const it = ITEMS[id];
-    return `<button class="btn btn-success battle-quick" onclick="battleAction('item','${id}')" title="${it.desc||''}">${it.emoji||'📦'} ${it.name}×${qty}</button>`;
-  }).join('');
+  // 元器件消耗栏：数量 > 0 的元件都显示（最多 6 个）
+  const compKeys = Object.keys(BATTLE_COMPONENT_ACTIONS);
+  const compBtns = compKeys
+    .filter(k => (state.components[k] || 0) > 0)
+    .slice(0, 6)
+    .map(k => {
+      const act = BATTLE_COMPONENT_ACTIONS[k];
+      const qty = state.components[k];
+      return `<button class="btn btn-info battle-quick" onclick="battleAction('component','${k}')" title="${act.desc}" style="min-width:auto">${act.emoji}×${qty}</button>`;
+    }).join('');
+
+  // 区域进度 HUD
+  const rp = state.regionProgress;
+  const region = state.currentRegion;
+  let regionHud = '';
+  if (rp && region) {
+    if (rp.isBossPhase) {
+      // Boss 阶段 HUD
+      const bm = state.bossMechanics || {};
+      const phaseIdx = bm.phaseIdx || 1;
+      const totalPhases = (REGION_BOSSES[rp.regionId]?.phases?.length || 1);
+      regionHud = `
+        <div style="position:absolute;top:6px;left:8px;right:8px;background:rgba(255,77,79,0.15);border:1px solid #FF4D4F;border-radius:6px;padding:6px 10px;font-size:11px">
+          <span style="color:#FF7875;font-weight:700;letter-spacing:1px">⚠️ BOSS</span>
+          <span style="margin-left:8px;color:#fff">${region.name} · Phase ${phaseIdx}/${totalPhases}</span>
+          ${bm.selfDestructing ? '<span style="margin-left:8px;color:#FFC53D">💥 自爆中</span>' : ''}
+          ${bm.evadePhase ? '<span style="margin-left:8px;color:#B37FEB">👻 虚化</span>' : ''}
+          ${bm.regenPhase ? '<span style="margin-left:8px;color:#52C41A">💚 回复中</span>' : ''}
+          ${bm.overclockActive ? '<span style="margin-left:8px;color:#FF7875">🔥 超频</span>' : ''}
+          ${bm.chargeCount ? `<span style="margin-left:8px;color:#FAAD14">⚡ 充能 ${bm.chargeCount}/${REGION_BOSSES[rp.regionId]?.chargeTurns||3}</span>` : ''}
+          ${bm.countdownActive ? `<span style="margin-left:8px;color:#FF4D4F;font-weight:800">⚠️ 飞升 ${3-(bm.countdownTurns||0)}</span>` : ''}
+        </div>`;
+    } else {
+      // 普通波次 HUD
+      const wIdx = rp.waveIdx + 1;
+      const total = rp.totalWaves;
+      const wavePct = Math.floor((wIdx / total) * 100);
+      regionHud = `
+        <div style="position:absolute;top:6px;left:8px;right:8px;background:rgba(22,119,255,0.12);border:1px solid #1677FF;border-radius:6px;padding:5px 10px;font-size:11px">
+          <span style="color:#69C0FF;font-weight:700">🗺️ ${region.name}</span>
+          <span style="margin-left:8px;color:#fff">第 ${wIdx}/${total} 波</span>
+          <div style="display:inline-block;margin-left:10px;width:80px;height:6px;background:#111827;border-radius:3px;overflow:hidden;vertical-align:middle">
+            <div style="height:100%;width:${wavePct}%;background:linear-gradient(90deg,#1677FF,#69C0FF);border-radius:3px;transition:width .4s"></div>
+          </div>
+          <span style="margin-left:6px;color:#B37FEB;font-size:9px">清完 → Boss</span>
+        </div>`;
+    }
+  }
+
+  // Boss 专属特效环（BOSS 战给敌方加红色光环）
+  const enemyRing = enemy.isBoss ? 'box-shadow:0 0 20px rgba(255,77,79,0.6);border:2px solid #FF4D4F;' : '';
+  const enemyNameTag = enemy.isBoss ? `<div style="font-size:9px;color:#FF7875;letter-spacing:1px;margin-top:2px;font-weight:700">⚡ BOSS</div>` : '';
 
   content.innerHTML = `
-    <div class="battle-arena">
+    <div class="battle-arena" style="position:relative">
+      ${regionHud}
       <div class="combatant player realm-${realmIdx}">
         <div class="combatant-sprite">${playerSprite}</div>
         <div class="combatant-name">▸ ${getRealmName()}</div>
@@ -1417,10 +1826,14 @@ function renderBattlePanel() {
         <div class="stat-bar" style="margin-top:3px"><div class="stat-fill fill-mp" style="width:${state.mp/state.maxMp*100}%"></div></div>
         <div style="font-size:10px;color:#60c0ff;margin-top:2px">${state.mp}/${state.maxMp}</div>
       </div>
-      <div class="vs">VS</div>
-      <div class="combatant enemy">
+      <div class="vs" style="flex-direction:column;font-size:10px;line-height:1.5">
+        ${rp && !rp.isBossPhase ? `⚔️\n${rp.waveIdx+1}/${rp.totalWaves}` : ''}
+        ${rp && rp.isBossPhase ? '👑' : ''}
+      </div>
+      <div class="combatant enemy" style="${enemyRing}">
         <div class="combatant-sprite">${enemy.emoji}</div>
         <div class="combatant-name">▸ ${enemy.name}</div>
+        ${enemyNameTag}
         <div class="stat-bar"><div class="stat-fill fill-hp" style="width:${enemy.currentHp/enemy.maxHp*100}%"></div></div>
         <div style="font-size:10px;color:#ff8060;margin-top:2px">${enemy.currentHp}/${enemy.maxHp}</div>
       </div>
@@ -1428,13 +1841,22 @@ function renderBattlePanel() {
     <div class="battle-log" id="battleLog">${bs.logs.map(l => `<p class="log-${l.type}">> ${l.text}</p>`).join('')}</div>
     <!-- 主行动按钮 -->
     <div class="battle-actions">
-      <button class="btn btn-danger" onclick="battleAction('attack')">⚔️ ATTACK</button>
-      <button class="btn" onclick="battleAction('flee')" style="border-color:#888;color:#888">🏃 FLEE</button>
+      <button class="btn btn-danger" onclick="battleAction('attack')" title="[Q]">⚔️ ATTACK <span style="font-size:9px;opacity:.6">[Q]</span></button>
+      <button class="btn" onclick="battleActionComponentSmart()" style="border-color:var(--blue-400);color:var(--blue-300)" title="[W] 智能增效">🛡️ 增效 <span style="font-size:9px;opacity:.6">[W]</span></button>
+      <button class="btn" onclick="battleAction('flee')" style="border-color:#888;color:#888" title="[E]">🏃 FLEE <span style="font-size:9px;opacity:.6">[E]</span></button>
+      <button class="btn ${state.autoBattle?'btn-success':'btn-info'}" onclick="toggleAutoBattle()" title="[R] 自动战斗开关" style="${state.autoBattle?'animation:pulseGlow 1s infinite':''}">🤖 ${state.autoBattle?'ON':'AUTO'} <span style="font-size:9px;opacity:.6">[R]</span></button>
     </div>
-    <!-- 法术快捷栏（默认展开） -->
+    <!-- 快捷键提示条 -->
+    <div style="text-align:center;font-size:9px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">
+      [1][2][3][4] 法术 · [Q] 普攻 · [W] 增效 · [E] 逃跑 · [R] 自动
+    </div>
+    <!-- 法术快捷栏 -->
     ${skillBtns ? `<div class="quick-bar">${skillBtns}</div>` : ''}
-    <!-- 道具快捷栏（默认展开） -->
-    ${itemBtns ? `<div class="quick-bar">${itemBtns}</div>` : ''}
+    <!-- 元器件消耗栏（战斗中专属） -->
+    <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)">
+      <div style="font-size:10px;color:var(--blue-500);letter-spacing:1px;margin-bottom:6px;font-weight:600">🔩 元器件消耗 · 点击触发战斗机制</div>
+      <div class="quick-bar">${compBtns || '<span style="color:var(--text-dim);font-size:10px">仓库里没有可消耗的元器件 · 去探索地图拆解吧</span>'}</div>
+    </div>
   `;
   $('battleLog').scrollTop = $('battleLog').scrollHeight;
 }
@@ -1455,19 +1877,156 @@ function startBattle(region, enemyScale = 1) {
   state.inBattle = true;
   state.tempAtkMul = 1;
   state.enemyDebuffs = { hitChance: 1, turns: 0 };
+  // 元器件消耗产生的待定 buff
+  state.pendingShield = null;      // 电阻限流护盾 null 或 { reduce: 0.4 }
+  state.pendingCrit = false;       // 二极管必定暴击
+  state.pendingSpellMul = 1;       // 晶体管法术伤害倍率（1 = 无增益）
+  state.pendingDefMul = 1;         // PCB 防御倍率（战斗中）
+  state.pendingDefTurns = 0;       // PCB 防御剩余回合
   state.battleState = { enemy, logs: [{ type: 'info', text: `遭遇 ${enemy.name}!` }] };
   switchTab('battle');
+  maybeAutoBattleTakeover();
+}
+
+// 战斗启动后，如果自动战斗开着就接管（被 startWaveBattle / launchBoss / startBattle 统一调用）
+function maybeAutoBattleTakeover() {
+  if (state.autoBattle && state.inBattle) {
+    pushLog('info', '🤖 自动战斗接力 · 接管');
+    setTimeout(() => autoTurn(), 300);
+  }
 }
 
 function pushLog(type, text) { state.battleState.logs.push({ type, text }); }
 
-function battleAction(action, skillId = null, itemId = null) {
+function battleAction(action, skillId = null, itemId = null, compKey = null) {
   if (!state.inBattle) return;
   const bs = state.battleState, enemy = bs.enemy;
+
+  // ===== 玩家回合开始：触发饰品被动（超频芯片自动激活）=====
+  triggerTurnStartEffects();
 
   if (action === 'flee') {
     if (Math.random() < 0.5) { playSFX('flee'); pushLog('info', '成功短路逃跑!'); endBattle(false); }
     else { playSFX('warn'); pushLog('dmg', '逃跑失败!'); enemyTurn(); }
+    updateBattleUI(); return;
+  }
+
+  // ========== 元器件消耗分支 ==========
+  if (action === 'component' && compKey) {
+    const act = BATTLE_COMPONENT_ACTIONS[compKey];
+    if (!act) return;
+    if ((state.components[compKey] || 0) <= 0) { showToast('仓库里没有这个元器件!'); return; }
+    state.components[compKey]--;
+    pushLog('skill', `🔩 消耗 ${act.emoji} ${act.name}!`);
+    playSFX('craft');
+
+    // 各效果实现
+    switch (act.effect) {
+      case 'shield':
+        state.pendingShield = { reduce: 0.4 };
+        pushLog('info', '限流护盾启动 · 下一次受伤 -40%');
+        showToast('🟫 电阻护盾就绪');
+        break;
+      case 'mp': {
+        const mp = Math.floor(state.maxMp * act.mpPercent);
+        state.mp = Math.min(state.maxMp, state.mp + mp);
+        pushLog('heal', `电容放电 · 恢复 ${mp} MP`);
+        showDamageFloat('+' + mp + ' A', 'mp', 'player');
+        showSparks(12, 'blue', 'player');
+        showBlast('blue', 'player');
+        playSFX('heal');
+        break;
+      }
+      case 'crit':
+        state.pendingCrit = true;
+        pushLog('info', '二极管单向聚焦 · 下次必定暴击 (×2.5)');
+        showToast('🟨 二极管暴击就绪');
+        break;
+      case 'spell_mul':
+        state.pendingSpellMul = act.mul;
+        pushLog('info', `晶体管信号放大 · 下次法术伤害 ×${act.mul}`);
+        showToast('🟪 晶体管放大器就绪');
+        break;
+      case 'true_dmg': {
+        const dmg = Math.floor(enemy.maxHp * act.hpPercent);
+        enemy.currentHp -= dmg;
+        pushLog('dmg', `🔴 芯片核心穿透 · 对 ${enemy.name} 造成 ${dmg} 真实伤害`);
+        showDamageFloat('-' + dmg, 'spell', 'enemy');
+        showSparks(16, 'red', 'enemy');
+        shakeCombatant('enemy');
+        shakeArena();
+        playSFX('skill');
+        break;
+      }
+      case 'overclock': {
+        // 立即发动超频一击
+        const baseAtk = state.atk * act.dmgMul * state.tempAtkMul;
+        const dmg = Math.max(1, Math.floor(baseAtk - enemy.def * 0.3 + Math.random() * baseAtk * 0.2));
+        enemy.currentHp -= dmg;
+        pushLog('crit', `💢 CPU超频一击! ${enemy.name} 受到 ${dmg} 点毁灭性伤害`);
+        showDamageFloat('-' + dmg, 'crit', 'enemy', true);
+        showSparks(20, 'red', 'enemy');
+        showBlast('red', 'enemy');
+        shakeCombatant('enemy');
+        shakeArena();
+        // 自损
+        const selfD = Math.floor(state.maxHp * act.selfDmgPercent);
+        state.hp -= selfD;
+        pushLog('dmg', `超频反冲! 自损 ${selfD} HP`);
+        showDamageFloat('-' + selfD, 'normal', 'player');
+        shakeCombatant('player');
+        playSFX('crit');
+        break;
+      }
+      case 'heal': {
+        const heal = Math.floor(state.maxHp * act.hpPercent);
+        state.hp = Math.min(state.maxHp, state.hp + heal);
+        pushLog('heal', `内存条应急补给 · 恢复 ${heal} HP`);
+        showDamageFloat('+' + heal, 'heal', 'player');
+        showSparks(10, 'gold', 'player');
+        playSFX('heal');
+        break;
+      }
+      case 'cool': {
+        const mp = Math.floor(state.maxMp * act.mpPercent);
+        state.mp = Math.min(state.maxMp, state.mp + mp);
+        // 清除敌方 debuff 影响（反过来，清除自身对敌方的 debuff 剩余？这里做"清除敌方增益"——目前敌人没增益，先跳过）
+        pushLog('info', `散热片稳定 · 恢复 ${mp} MP，清除敌方增益`);
+        showDamageFloat('+' + mp + ' A', 'mp', 'player');
+        showSparks(12, 'blue', 'player');
+        playSFX('heal');
+        break;
+      }
+      case 'dual_heal': {
+        const heal = Math.floor(state.maxHp * act.hpPercent);
+        const mp = Math.floor(state.maxMp * act.mpPercent);
+        state.hp = Math.min(state.maxHp, state.hp + heal);
+        state.mp = Math.min(state.maxMp, state.mp + mp);
+        pushLog('heal', `电池续航 · 恢复 ${heal} HP + ${mp} MP`);
+        showDamageFloat('+' + heal, 'heal', 'player');
+        showDamageFloat('+' + mp + ' A', 'mp', 'player');
+        showSparks(14, 'gold', 'player');
+        playSFX('heal');
+        break;
+      }
+      case 'def_buff':
+        state.pendingDefMul = act.defMul;
+        state.pendingDefTurns = act.turns;
+        pushLog('info', `PCB强化基底 · 防御 +30% 持续 ${act.turns} 回合`);
+        showToast('🟩 PCB 防御 buff 激活');
+        break;
+    }
+
+    // 击杀检测
+    if (enemy.currentHp <= 0) {
+      enemy.currentHp = 0;
+      pushLog('info', `>> ${enemy.name} 被击败!`);
+      playSFX('death');
+      updateBattleUI();
+      killEnemy();
+      setTimeout(() => endBattle(true), 800); return;
+    }
+    // 元器件消耗不占用敌人回合（作为额外行动）
     updateBattleUI(); return;
   }
 
@@ -1476,19 +2035,57 @@ function battleAction(action, skillId = null, itemId = null) {
   if (action === 'attack') {
     const atkMul = state.tempAtkMul;
     const baseAtk = state.atk * atkMul;
-    const isCrit = Math.random() < 0.12;
-    const critMul = isCrit ? 1.8 : 1;
-    const dmg = Math.max(1, Math.floor(baseAtk * critMul - enemy.def * 0.5 + Math.random() * baseAtk * 0.3));
-    enemy.currentHp -= dmg;
-    pushLog('dmg', (isCrit ? '💥 暴击! ' : '') + `你对 ${enemy.name} 造成 ${dmg} 点伤害`);
-    playSFX(isCrit ? 'crit' : 'attack');
-    updateBattleUI();
-    // 先重绘 DOM，再加特效（否则 innerHTML 会清掉 class）
-    chargePlayer();
-    shakeCombatant('enemy');
-    showDamageFloat('-' + dmg, 'normal', 'enemy', isCrit);
-    showSparks(isCrit ? 16 : 10, isCrit ? 'red' : 'gold', 'enemy');
-    if (isCrit) shakeArena();
+    // 武器被动：critBonus 加到暴击率里
+    const isCrit = state.pendingCrit || Math.random() < (0.12 + (state.equipEffects.critBonus || 0));
+    const critMul = isCrit ? (state.pendingCrit ? 2.5 : 1.8) : 1;
+    if (state.pendingCrit) state.pendingCrit = false;
+    if (enemy.isBoss && state.bossMechanics && state.bossMechanics.evadePhase && !isCrit && Math.random() < 0.4) {
+      pushLog('info', `👻 ${enemy.name} 虚化闪避了你的攻击！`);
+      shakeCombatant('player');
+      updateBattleUI();
+      showSparks(8, 'blue', 'enemy');
+    } else {
+      const dmg = Math.max(1, Math.floor(baseAtk * critMul - enemy.def * 0.5 + Math.random() * baseAtk * 0.3));
+      enemy.currentHp -= dmg;
+      pushLog('dmg', (isCrit ? '💥 暴击! ' : '') + `你对 ${enemy.name} 造成 ${dmg} 点伤害` + (isCrit && enemy.isBoss && state.bossMechanics && state.bossMechanics.evadePhase ? '（二极管穿透虚化！）' : ''));
+      playSFX(isCrit ? 'crit' : 'attack');
+      updateBattleUI();
+      chargePlayer();
+      shakeCombatant('enemy');
+      showDamageFloat('-' + dmg, 'normal', 'enemy', isCrit);
+      showSparks(isCrit ? 16 : 10, isCrit ? 'red' : 'gold', 'enemy');
+      if (isCrit) shakeArena();
+      // ===== 武器被动特效触发 =====
+      const ef = state.equipEffects;
+      // 雷击（飞升之剑）
+      if (ef.thunderStrike && Math.random() < ef.thunderStrike.chance) {
+        const realDmg = Math.floor(baseAtk * ef.thunderStrike.realDmgPct);
+        enemy.currentHp -= realDmg;
+        pushLog('crit', `⚡ 雷击! ${enemy.name} 受到 ${realDmg} 真实伤害(无视防御)`);
+        showDamageFloat('-' + realDmg + '⚡', 'crit', 'enemy', true);
+        showSparks(24, '#FFD700', 'enemy');
+        shakeArena();
+      }
+      // 信号干扰（灵能长剑）
+      if (ef.signalJammer && Math.random() < ef.signalJammer.chance) {
+        state.equipRuntime.jammerApplied = ef.signalJammer.duration;
+        pushLog('info', `📡 信号干扰! ${enemy.name} 下回合命中率 -${Math.floor(ef.signalJammer.missPct*100)}%`);
+      }
+      // 暴击流血（电路匕首）
+      if (isCrit && ef.critBleed) {
+        const bleedDmg = Math.floor(state.atk * ef.critBleed.bleedPct);
+        state.equipRuntime.pendingBleed = bleedDmg;
+        pushLog('info', `🩸 流血! ${enemy.name} 下回合受到 ${bleedDmg} 额外伤害`);
+      }
+      // 暴击额外一击（虚空斩）
+      if (isCrit && ef.critExtraHit && Math.random() < ef.critExtraHit.chance) {
+        const extraDmg = Math.max(1, Math.floor(baseAtk * ef.critExtraHit.mul - enemy.def * 0.3));
+        enemy.currentHp -= extraDmg;
+        pushLog('crit', `🌙 虚空波纹! 额外造成 ${extraDmg} 点伤害`);
+        showDamageFloat('-' + extraDmg + '🌙', 'crit', 'enemy', true);
+        showSparks(16, '#9966FF', 'enemy');
+      }
+    }
   }
 
   if (action === 'skill' && skillId) {
@@ -1507,16 +2104,29 @@ function battleAction(action, skillId = null, itemId = null) {
     }
     if (skill.dmgMul) {
       const atkMul = state.tempAtkMul;
-      const baseAtk = state.atk * skill.dmgMul * atkMul;
+      const spellMul = state.pendingSpellMul;
+      if (spellMul > 1) {
+        pushLog('info', `晶体管放大生效! 法术伤害 ×${spellMul}`);
+        state.pendingSpellMul = 1;
+      }
+      // 等离子步枪：法术伤害 +20%
+      const weaponSpellMul = state.equipEffects.skillDmgMul || 1;
+      const baseAtk = state.atk * skill.dmgMul * atkMul * spellMul * weaponSpellMul;
       const isCrit = skill.dmgMul >= 3 || Math.random() < 0.1;
       const dmg = Math.max(1, Math.floor(baseAtk - enemy.def * 0.3 + Math.random() * baseAtk * 0.2));
       enemy.currentHp -= dmg;
       pushLog(isCrit ? 'crit' : 'dmg', (isCrit ? '💥 暴击! ' : '') + `${enemy.name} 受到 ${dmg} 点伤害`);
+      if (weaponSpellMul > 1) pushLog('info', `🔫 等离子步枪加持 · 法术 ×${weaponSpellMul.toFixed(2)}`);
     }
     if (skill.selfDmg) {
-      const selfD = Math.floor(state.maxHp * skill.selfDmg);
-      state.hp -= selfD;
-      pushLog('dmg', `超频反冲! 自损 ${selfD} HP`);
+      // 道祖之心：所有自损技能不再自损
+      if (state.equipEffects.noSelfDamage) {
+        pushLog('info', `💖 道祖之心护体 · ${skill.name} 不再自损`);
+      } else {
+        const selfD = Math.floor(state.maxHp * skill.selfDmg);
+        state.hp -= selfD;
+        pushLog('dmg', `超频反冲! 自损 ${selfD} HP`);
+      }
     }
     if (skill.tempAtkMul) {
       state.tempAtkMul = skill.tempAtkMul;
@@ -1589,23 +2199,149 @@ function battleAction(action, skillId = null, itemId = null) {
 
 function enemyTurn() {
   const bs = state.battleState, enemy = bs.enemy;
+
+  // ===== 敌人回合开头：先吃流血伤害 =====
+  if (state.equipRuntime.pendingBleed > 0) {
+    enemy.currentHp -= state.equipRuntime.pendingBleed;
+    pushLog('dmg', `🩸 流血生效! ${enemy.name} 受到 ${state.equipRuntime.pendingBleed} 额外伤害`);
+    showDamageFloat('-' + state.equipRuntime.pendingBleed + '🩸', 'normal', 'enemy');
+    state.equipRuntime.pendingBleed = 0;
+    if (enemy.currentHp <= 0) {
+      enemy.currentHp = 0;
+      pushLog('info', `>> ${enemy.name} 流血不止被击败!`);
+      playSFX('death'); updateBattleUI(); killEnemy();
+      setTimeout(() => endBattle(true), 800); return;
+    }
+  }
+
+  // ===== 信号干扰被动生效：降低敌人命中率 =====
+  if (state.equipRuntime.jammerApplied > 0 && state.equipEffects.signalJammer) {
+    if (!state.enemyDebuffs || state.enemyDebuffs.turns <= 0) {
+      state.enemyDebuffs = {
+        hitChance: 1 - state.equipEffects.signalJammer.missPct,
+        turns: state.equipEffects.signalJammer.duration
+      };
+    }
+    state.equipRuntime.jammerApplied--;
+  }
+
+  // ========== Boss 专属机制 ==========
+  if (enemy.isBoss) handleBossPhase();
+
   // 检查命中率 debuff
   if (state.enemyDebuffs.hitChance < 1 && Math.random() > state.enemyDebuffs.hitChance) {
     pushLog('info', `${enemy.name} 攻击被信号干扰, 未命中!`);
     if (state.enemyDebuffs.turns > 0) { state.enemyDebuffs.turns--; if (state.enemyDebuffs.turns <= 0) state.enemyDebuffs = { hitChance: 1, turns: 0 }; }
+    decayDefBuff();
     return;
   }
-  const dmg = Math.max(1, Math.floor(enemy.atk - state.def * 0.5 + Math.random() * enemy.atk * 0.3));
+
+  // 确定本次 Boss 攻击倍率（阶段驱动）
+  let atkMul = 1;
+  if (enemy.isBoss && state.bossMechanics && state.bossMechanics.atkMul) {
+    atkMul = state.bossMechanics.atkMul;
+  }
+
+  // PCB 防御 buff
+  const effectiveDef = Math.floor(state.def * (state.pendingDefMul || 1));
+  let dmg = Math.max(1, Math.floor(enemy.atk * atkMul - effectiveDef * 0.5 + Math.random() * enemy.atk * atkMul * 0.3));
+
+  // === 电鳗之龙充能机制 ===
+  if (enemy.isBoss && state.bossMechanics && state.bossMechanics.mechanic === 'charge_strike') {
+    state.bossMechanics.chargeCount++;
+    const chargeTurns = REGION_BOSSES[enemy.regionId].chargeTurns || 3;
+    if (state.bossMechanics.chargeCount >= chargeTurns) {
+      dmg = Math.floor(dmg * 2.5);
+      pushLog('skill', `⚡ ${enemy.name} 释放充能电流！威力翻倍！（电阻可吸收）`);
+      state.bossMechanics.chargeCount = 0;
+      if (state.components.resistor > 0) {
+        showToast('消耗 1 电阻吸收了充能电流！');
+        state.components.resistor--;
+        dmg = Math.floor(dmg * 0.3);
+      }
+    }
+  }
+
+  // === 熔丝领主自爆检查 ===
+  if (enemy.isBoss && state.bossMechanics && state.bossMechanics.selfDestructing) {
+    dmg = Math.floor(state.maxHp * 0.4);
+    pushLog('crit', `💥 熔丝领主触发熔断自爆！造成 ${dmg} 点真实伤害！（散热片可压制）`);
+    state.bossMechanics.selfDestructing = false;
+    if (state.components.heatsink > 0) {
+      showToast('消耗 1 散热片压制了自爆！伤害减半');
+      state.components.heatsink--;
+      dmg = Math.floor(dmg * 0.5);
+    }
+  }
+
+  // 电阻限流护盾
+  if (state.pendingShield) {
+    const reduced = Math.floor(dmg * (1 - state.pendingShield.reduce));
+    pushLog('info', `🟫 电阻护盾吸收了 ${dmg - reduced} 点伤害!`);
+    dmg = reduced;
+    state.pendingShield = null;
+  }
+
+  // ===== 护甲被动：基础减伤（阻流背心）=====
+  dmg = Math.max(1, Math.floor(dmg * (1 - (state.equipEffects.dmgReduceBonus || 0))));
+
+  // ===== 护甲被动：飞升法衣保命（致命伤害保留 1HP）=====
+  if (state.equipEffects.deathDefy && !state.equipRuntime.deathDefyUsed && state.hp <= dmg) {
+    state.hp = 1;
+    state.equipRuntime.deathDefyUsed = true;
+    pushLog('crit', `✨ 飞升法衣触发! 致命伤害被免除 · 保留 1 HP`);
+    showDamageFloat('1✨', 'heal', 'player', true);
+    playSFX('heal');
+    // 虽然免伤了，敌人也还是算打了一轮
+    showSparks(12, 'blue', 'player');
+    shakeCombatant('player');
+    // 触发其他护甲特效（反弹）
+    triggerArmorOnHit(enemy, 0);
+    // 超频巨兽自伤也执行
+    if (enemy.isBoss && state.bossMechanics && state.bossMechanics.mechanic === 'overclock' && state.bossMechanics.overclockActive) {
+      const selfDmg = state.bossMechanics.overclockDamagePerTurn;
+      enemy.currentHp -= selfDmg;
+      pushLog('info', `🔥 超频过热！${enemy.name} 自损 ${selfDmg} HP`);
+    }
+    updateBattleUI();
+    checkPlayerDead();
+    checkEnemyDead(enemy);
+    return;
+  }
+
   state.hp -= dmg;
   pushLog('dmg', `${enemy.name} 对你造成 ${dmg} 点伤害`);
   state.mp = Math.min(state.maxMp, state.mp + 3);
   playSFX('hit');
   updateBattleUI();
-  // 后加特效
   showDamageFloat('-' + dmg, 'normal', 'player');
   showSparks(10, 'red', 'player');
   shakeCombatant('player');
   shakeArena();
+  decayDefBuff();
+
+  // ===== 护甲被动：被击后触发（反弹、自动回复）=====
+  triggerArmorOnHit(enemy, dmg);
+
+  // === Boss 超频阶段自伤 ===
+  if (enemy.isBoss && state.bossMechanics && state.bossMechanics.mechanic === 'overclock' && state.bossMechanics.overclockActive) {
+    const selfDmg = state.bossMechanics.overclockDamagePerTurn;
+    enemy.currentHp -= selfDmg;
+    pushLog('info', `🔥 超频过热！${enemy.name} 自损 ${selfDmg} HP`);
+  }
+
+  // === AI 主神倒计时（飞升）===
+  if (enemy.isBoss && state.bossMechanics && state.bossMechanics.mechanic === 'final_boss' && state.bossMechanics.countdownActive) {
+    state.bossMechanics.countdownTurns++;
+    const t = state.bossMechanics.countdownTurns;
+    pushLog('warn', `⚠️ 飞升倒计时: ${3 - t} 回合`);
+    if (t >= 3) {
+      // 3 回合没击杀 → 屏幕团灭
+      pushLog('dmg', '>> 飞升完成！你被主神抹除了...');
+      state.hp = 0;
+    }
+  }
+
   if (state.hp <= 0) {
     state.hp = 0;
     pushLog('dmg', '>> 你被击败了...');
@@ -1614,6 +2350,136 @@ function enemyTurn() {
     if (p) { p.classList.add('dying'); showBlast('red', 'player'); }
     updateBattleUI();
     setTimeout(() => endBattle(false), 800);
+  }
+}
+
+// ========== 装备特效辅助函数 ==========
+
+// 护甲被动：被击后触发（合金护甲反弹、量子圣袍自动回复）
+function triggerArmorOnHit(enemy, incomingDmg) {
+  const ef = state.equipEffects;
+  const rt = state.equipRuntime;
+  if (ef.reflect && incomingDmg > 0 && Math.random() < ef.reflect.chance) {
+    const reflectDmg = Math.floor(incomingDmg * ef.reflect.reflectPct);
+    enemy.currentHp -= reflectDmg;
+    pushLog('crit', `🦾 合金护甲反弹! ${enemy.name} 受到 ${reflectDmg} 点反击伤害`);
+    showDamageFloat('-' + reflectDmg, 'crit', 'enemy', true);
+    showSparks(12, '#FFD700', 'enemy');
+    shakeCombatant('enemy');
+  }
+  if (ef.autoHeal && rt.autoHealCd <= 0) {
+    const hpPct = state.hp / state.maxHp;
+    if (hpPct < ef.autoHeal.hpThreshold && (state.components[ef.autoHeal.costComp] || 0) >= ef.autoHeal.costQty) {
+      state.components[ef.autoHeal.costComp] -= ef.autoHeal.costQty;
+      const healAmt = Math.floor(state.maxHp * ef.autoHeal.healPct);
+      state.hp = Math.min(state.maxHp, state.hp + healAmt);
+      rt.autoHealCd = ef.autoHeal.cooldown;
+      pushLog('heal', `👘 量子圣袍应急! 消耗 1 电容回复 ${healAmt} HP`);
+      showDamageFloat('+' + healAmt, 'heal', 'player');
+      showSparks(14, '#00FF88', 'player');
+      playSFX('heal');
+    }
+  }
+  // 护甲特效冷却递减
+  if (rt.autoHealCd > 0) rt.autoHealCd--;
+}
+
+// 回合开始时触发的饰品特效（超频芯片自动消耗晶体管）
+function triggerTurnStartEffects() {
+  const ef = state.equipEffects;
+  const rt = state.equipRuntime;
+  // 超频芯片：每 N 回合自动消耗晶体管给法术 buff
+  if (ef.autoAmplify) {
+    rt.autoAmplifyCountdown++;
+    if (rt.autoAmplifyCountdown >= ef.autoAmplify.turns) {
+      rt.autoAmplifyCountdown = 0;
+      if ((state.components[ef.autoAmplify.costComp] || 0) >= ef.autoAmplify.costQty) {
+        state.components[ef.autoAmplify.costComp] -= ef.autoAmplify.costQty;
+        state.pendingSpellMul = ef.autoAmplify.buffSkillMul;
+        pushLog('info', `🧠 超频芯片自动激活! 下次法术伤害 ×${ef.autoAmplify.buffSkillMul}`);
+      }
+    }
+  }
+}
+
+// 新战斗开始时重置装备运行时状态
+function resetEquipRuntime() {
+  state.equipRuntime = {
+    reflectCd: 0, autoHealCd: 0, autoAmplifyCountdown: 0,
+    deathDefyUsed: false, pendingBleed: 0, pendingAmplifyBuff: 0,
+    jammerApplied: 0,
+  };
+}
+
+// ========== Boss 阶段切换 & 专属机制 ==========
+function handleBossPhase() {
+  const enemy = state.battleState.enemy;
+  const bm = state.bossMechanics;
+  const bossCfg = REGION_BOSSES[enemy.regionId];
+  if (!bossCfg) return;
+
+  const hpPct = enemy.currentHp / enemy.maxHp;
+
+  // === 三阶段升级（逐阶段触发阶段逻辑）===
+  for (let i = bm.phaseIdx; i < bossCfg.phases.length; i++) {
+    const phase = bossCfg.phases[i];
+    if (hpPct <= phase.hpPct && bm.phaseIdx < i + 1) {
+      bm.phaseIdx = i + 1;
+      bm.atkMul = phase.atkMul || 1;
+      if (phase.log) { pushLog('info', phase.log); showWaveFlash('⚠️ Boss 阶段变化', phase.log, 'red'); }
+      // === 各阶段特殊机制触发 ===
+      if (phase.special === 'self_destruct') {
+        bm.selfDestructing = true;
+        pushLog('warn', '熔丝领主开始自爆倒计时！');
+      }
+      if (phase.special === 'evade') { bm.evadePhase = true; }
+      if (phase.special === 'regenerate') { bm.regenPhase = true; }
+      if (phase.special === 'overclock') {
+        bm.overclockActive = true;
+        bm.atkMul = 2.0;
+        pushLog('crit', '超频巨兽进入狂暴！每回合掉血！');
+      }
+      if (phase.special === 'summon') {
+        bm.summonCD = 3;  // 3 回合后召唤小弟
+        pushLog('warn', '虚空领主准备召唤小弟！');
+      }
+      if (phase.special === 'countdown') {
+        bm.countdownActive = true;
+        bm.countdownTurns = 0;
+      }
+    }
+  }
+
+  // === 幽灵王 疯狂回复阶段 ===
+  if (bm.mechanic === 'phase_evade' && bm.regenPhase) {
+    const regen = Math.floor(enemy.maxHp * 0.05);
+    enemy.currentHp = Math.min(enemy.maxHp, enemy.currentHp + regen);
+    pushLog('info', `👻 幽灵王回复 ${regen} HP！（芯片穿透可破回复）`);
+  }
+
+  // === 召唤小弟机制 ===
+  if (bm.mechanic === 'summon' && bm.summonCD > 0) {
+    bm.summonCD--;
+    if (bm.summonCD === 0) {
+      const minionDmg = Math.floor(enemy.atk * 0.3);
+      state.hp = Math.max(1, state.hp - minionDmg);
+      pushLog('dmg', `👺 召唤小弟偷袭！造成 ${minionDmg} 点伤害`);
+      // 小弟活着时 Boss 回血（模拟小弟提供能量）
+      enemy.currentHp = Math.min(enemy.maxHp, enemy.currentHp + Math.floor(enemy.maxHp * 0.02));
+      bm.summonCD = 0;  // 这次召唤完
+    }
+  }
+}
+
+// 辅助：PCB 防御 buff 回合衰减
+function decayDefBuff() {
+  if (state.pendingDefTurns > 0) {
+    state.pendingDefTurns--;
+    if (state.pendingDefTurns <= 0) {
+      state.pendingDefMul = 1;
+      state.pendingDefTurns = 0;
+      if (state.inBattle) pushLog('info', '🟩 PCB 强化基底效果结束');
+    }
   }
 }
 
@@ -1989,79 +2855,560 @@ document.addEventListener('keydown', unlockAudio, { once: true });
 // 如果之前已解锁过，预先初始化
 if (localStorage.getItem('xiuxian_audio_unlocked') === '1') _audioUnlocked = true;
 
-function endBattle(won) {
-  const bs = state.battleState, enemy = bs.enemy;
-  const rewards = { xp: 0, gold: 0, comps: {}, item: null, lostGold: 0 };
-  if (won) {
-    let xpGain = enemy.xp, goldGain = Math.floor(enemy.gold[0] + Math.random() * (enemy.gold[1] - enemy.gold[0]));
-    if (state.xpBonus) xpGain = Math.floor(xpGain * (1 + state.xpBonus));
-    if (state.goldBonus) goldGain = Math.floor(goldGain * (1 + state.goldBonus));
-    const luckyUsed = state.luckyNextBattle;
-    if (luckyUsed) { xpGain *= 2; goldGain *= 2; state.luckyNextBattle = false; }
-    state.gold += goldGain; state.stats.goldEarned += goldGain;
-    gainXp(xpGain); state.stats.battlesWon++;
-    hookQuestProgress('kill_enemy', 1);  // 任务挂钩
-    playSFX('coin');
-    rewards.xp = xpGain; rewards.gold = goldGain;
-    // 元器件掉落
-    const drops = dropComponents(enemy);
-    for (const [comp, qty] of Object.entries(drops)) {
-      state.components[comp] = (state.components[comp] || 0) + qty;
-      rewards.comps[comp] = qty;
-    }
-    // 随机掉落消耗品
-    if (Math.random() < 0.25) {
-      const drops2 = ['heal_pack','mp_pack','big_heal'];
-      const drop = drops2[Math.floor(Math.random() * drops2.length)];
-      state.bag[drop] = (state.bag[drop] || 0) + 1;
-      rewards.item = drop;
-    }
-    if (luckyUsed) rewards.lucky = true;
-    state.mp = Math.min(state.maxMp, state.mp + Math.floor(state.maxMp * 0.2));
-  } else {
-    const lost = Math.floor(state.gold * 0.3);
-    if (lost > 0) { state.gold -= lost; rewards.lostGold = lost; }
-    state.xp = Math.floor(state.xp * 0.5);
-    state.hp = state.maxHp; state.mp = state.maxMp;
-    state.stats.battlesLost++;
+// ========== 战斗键盘快捷键 ==========
+document.addEventListener('keydown', (e) => {
+  // 只在战斗面板且无 modal 遮挡时生效
+  if (!state.inBattle) return;
+  const activeTab = document.querySelector('.nav-btn.active');
+  if (activeTab?.dataset.tab !== 'battle') return;
+  if (document.querySelector('.modal-overlay')) return;
+
+  // 如果自动战斗中，任何手动按键都暂停自动（R 除外，R 就是用来 toggle 的）
+  if (state.autoBattle && e.key.toLowerCase() !== 'r') {
+    stopAutoBattle();
   }
-  state.inBattle = false; state.battleState = null; state.currentRegion = null;
-  updateHeader(); saveGame();
-  // 显示结算弹窗
-  showSettleModal(won, enemy, rewards);
+
+  const key = e.key.toLowerCase();
+  const skillBar = (state.skillBar && state.skillBar.length ? state.skillBar : state.learnedSkills).slice(0, 4);
+
+  switch (key) {
+    case '1': case '2': case '3': case '4': {
+      const idx = parseInt(key) - 1;
+      const sid = skillBar[idx];
+      if (sid) battleAction('skill', sid);
+      break;
+    }
+    case 'q':
+      battleAction('attack');
+      break;
+    case 'w':
+      battleActionComponentSmart();
+      break;
+    case 'e':
+      battleAction('flee');
+      break;
+    case 'r':
+      toggleAutoBattle();
+      break;
+    case ' ':
+      e.preventDefault();
+      battleAction('attack');
+      break;
+  }
+});
+
+// ========== 自动战斗（单模式：开了一直自动，跨波次保持，死了或手动关才停）==========
+function toggleAutoBattle() {
+  if (state.autoBattle) {
+    stopAutoBattle();
+  } else {
+    startAutoBattle();
+  }
 }
 
-function showSettleModal(won, enemy, rewards) {
+function startAutoBattle() {
+  if (!state.inBattle) { showToast('先进入战斗再开启自动'); return; }
+  state.autoBattle = true;
+  showToast('🤖 自动战斗开启 · 按 R 或手动按钮暂停');
+  pushLog('info', '🤖 自动战斗已开启');
+  updateBattleUI();
+  // 立即执行第一回合，不等延时
+  autoTurn();
+}
+
+function stopAutoBattle() {
+  state.autoBattle = false;
+  if (state.autoTimer) { clearTimeout(state.autoTimer); state.autoTimer = null; }
+  showToast('⏹ 自动战斗暂停');
+  updateBattleUI();
+}
+
+// 自动战斗回合间延时（给特效留时间，但要够快）
+function scheduleAutoTurn(delay = 350) {
+  if (state.autoTimer) clearTimeout(state.autoTimer);
+  state.autoTimer = setTimeout(() => {
+    if (!state.inBattle) return;
+    autoTurn();
+  }, delay);
+}
+
+// 自动战斗入口：决策 → 调用现有 battleAction
+function autoTurn() {
+  if (!state.autoBattle || !state.inBattle) return;
+  const decision = autoDecide();
+  if (!decision) {
+    stopAutoBattle();
+    return;
+  }
+  pushLog('info', '🤖 ' + decision.reason);
+
+  // continue_turn = 只消耗元器件（额外行动），然后继续决策放什么
+  if (decision.action === 'continue_turn') {
+    if (decision.compAction) {
+      battleAction('component', null, null, decision.compAction);
+    }
+    setTimeout(() => autoTurn(), 200);
+    return;
+  }
+
+  // 普通流程：先消耗元器件（额外行动），再放技能/普攻
+  if (decision.compAction) {
+    battleAction('component', null, null, decision.compAction);
+  }
+  battleAction(decision.action, decision.skillId);
+
+  // battleAction 内部会触发 enemyTurn → 结束本回合
+  // 等它完成副作用后决定下一步：还在战斗就继续，波次衔接等 startBattle 接力，死了就停
+  setTimeout(() => {
+    if (state.autoBattle && state.inBattle) {
+      scheduleAutoTurn();
+    } else if (state.autoBattle && !state.inBattle) {
+      // 战斗结束但自动还开着 → 等下一场 startBattle 接力
+      scheduleAutoTurn(1200);
+    }
+  }, 900);
+}
+
+// ========== 自动战斗决策树 ==========
+function autoDecide() {
+  const enemy = state.battleState?.enemy;
+  if (!enemy || enemy.currentHp <= 0) return null;
+
+  const hpPct = state.hp / state.maxHp;
+  const mpPct = state.mp / state.maxMp;
+  const isBoss = !!enemy.isBoss;
+
+  const skillBar = (state.skillBar && state.skillBar.length ? state.skillBar : state.learnedSkills)
+    .map(id => SKILLS.find(s => s.id === id))
+    .filter(Boolean);
+
+  const enemyDebuffed = state.enemyDebuffs && state.enemyDebuffs.turns > 0;
+
+  // ---------- 层 1: 紧急救援 ----------
+  // 治疗：内存条（不占回合）> 治疗技能（占回合）
+  const healSkill = skillBar.find(s => s.healMul && s.mpCost <= state.mp);
+  if (hpPct < 0.25) {
+    if ((state.components.ram || 0) > 0) return { action: 'continue_turn', compAction: 'ram', reason: `HP危急，消耗内存条` };
+    if (healSkill) return { action: 'skill', skillId: healSkill.id, reason: `HP危急(${Math.floor(hpPct*100)}%)，放 ${healSkill.name}` };
+  }
+
+  // 回蓝：电容（不占回合）→ 补完继续决策
+  const anyMpSkill = skillBar.find(s => s.mpCost > 0);
+  if ((anyMpSkill && state.mp < anyMpSkill.mpCost) || mpPct < 0.15) {
+    if ((state.components.capacitor || 0) > 0) {
+      return { action: 'continue_turn', compAction: 'capacitor', reason: 'MP不足，消耗电容补蓝' };
+    }
+  }
+
+  // ---------- 层 2: BOSS 特殊应对 ----------
+  if (isBoss && state.bossMechanics) {
+    const bm = state.bossMechanics;
+
+    // 幽灵王虚化 → 消耗二极管穿透
+    if (bm.evadePhase && (state.components.diode || 0) > 0) {
+      return buildComponentAttack('diode', '虚化阶段，二极管穿透');
+    }
+
+    // BOSS 充能中 → 留电阻但先给一下暴击增效
+    if (bm.chargeCount !== undefined && (state.components.diode || 0) > 0 && (bm.chargeCount + 1) >= 3) {
+      // 下回合 BOSS 会放大招，先上二极管，同时消耗电阻挡伤害是 enemyTurn 里自动的
+      return buildComponentAttack('diode', 'BOSS即将充能放电，先叠暴击');
+    }
+
+    // AI 主神飞升倒计时 → 全力输出（自损也上）
+    if (bm.countdownActive) {
+      const bestDamage = pickBestDamageSkill(skillBar);
+      if (bestDamage) return bestDamage;
+      return { action: 'attack', reason: '飞升倒计时！全力输出！' };
+    }
+
+    // BOSS 无 debuff → 优先信号干扰
+    if (!enemyDebuffed) {
+      const jamSkill = skillBar.find(s => s.debuffEnemy && s.mpCost <= state.mp);
+      if (jamSkill) return { action: 'skill', skillId: jamSkill.id, reason: `BOSS无debuff，放 ${jamSkill.name}` };
+    }
+  }
+
+  // ---------- 层 3: 技能选择 ----------
+  // 信号干扰（对非BOSS也有用）
+  if (!isBoss && !enemyDebuffed) {
+    const jamSkill = skillBar.find(s => s.debuffEnemy && s.mpCost <= state.mp);
+    if (jamSkill && skillBar.length > 1) {
+      // 只在还有其他技能可用时才用干扰，避免浪费回合
+      // 但如果 hp 低就不放了，先自救
+      if (hpPct > 0.4) return { action: 'skill', skillId: jamSkill.id, reason: `无debuff，放 ${jamSkill.name}` };
+    }
+  }
+
+  // HP 中等偏低 → 考虑治疗技能
+  if (hpPct < 0.4 && healSkill) {
+    return { action: 'skill', skillId: healSkill.id, reason: `HP ${Math.floor(hpPct*100)}%，治疗` };
+  }
+
+  // 超频一击 / 自损技能：HP > 50% 才用
+  if (hpPct > 0.5) {
+    const selfDmgSkill = skillBar.find(s => s.selfDmg && s.mpCost <= state.mp);
+    if (selfDmgSkill) {
+      return buildComponentDamageSkill(selfDmgSkill);
+    }
+  }
+
+  // 普通伤害技能：按效率选
+  const best = pickBestDamageSkill(skillBar);
+  if (best) return buildComponentDamageSkill(best);
+
+  // ---------- 层 4: 兜底普攻 ----------
+  return buildComponentAttack(null, 'MP不足或无合适技能，普攻');
+}
+
+// 选 (伤害倍率 / MP消耗) 效率最高的伤害技能
+function pickBestDamageSkill(skillBar) {
+  const damageSkills = skillBar.filter(s =>
+    s.dmgMul && !s.healMul && !s.selfDmg && !s.debuffEnemy && s.mpCost <= state.mp
+  );
+  if (damageSkills.length === 0) {
+    // 如果没有纯伤害技能，也考虑自损或 debuff 附带伤害的
+    const fallback = skillBar.filter(s => s.dmgMul && s.mpCost <= state.mp);
+    if (fallback.length === 0) return null;
+    return fallback.reduce((a, b) => (a.dmgMul / Math.max(a.mpCost,1) > b.dmgMul / Math.max(b.mpCost,1) ? a : b));
+  }
+  return damageSkills.reduce((a, b) => (a.dmgMul / Math.max(a.mpCost,1) > b.dmgMul / Math.max(b.mpCost,1) ? a : b));
+}
+
+// 组装决策：先消耗元器件，再放技能
+function buildComponentDamageSkill(skill) {
+  const comps = state.components;
+  // 法术技能 → 有晶体管先消耗（伤害 ×1.5）
+  if ((comps.transistor || 0) > 0 && state.pendingSpellMul === 1) {
+    return { action: 'skill', skillId: skill.id, compAction: 'transistor', reason: `晶体管+${skill.name}` };
+  }
+  return { action: 'skill', skillId: skill.id, reason: `放 ${skill.name}` };
+}
+
+// 组装决策：先消耗元器件，再普攻
+function buildComponentAttack(compKey, reason) {
+  if (!compKey) return { action: 'attack', reason };
+  return { action: 'attack', compAction: compKey, reason };
+}
+
+// W 键：智能消耗一个最优元器件（给手动玩家用的一键增效）
+function battleActionComponentSmart(forceKey = null) {
+  if (!state.inBattle) return;
+  const enemy = state.battleState?.enemy;
+  if (!enemy) return;
+
+  const comps = state.components;
+  const hasTransistor = (comps.transistor || 0) > 0;
+  const hasDiode = (comps.diode || 0) > 0;
+  const hasChip = (comps.chip || 0) > 0;
+  const hasResistor = (comps.resistor || 0) > 0;
+  const hasCapacitor = (comps.capacitor || 0) > 0;
+  const hasRam = (comps.ram || 0) > 0;
+
+  // 如果指定了强制 key（给 AI 内部用），直接用
+  if (forceKey && comps[forceKey] > 0) {
+    battleAction('component', null, null, forceKey);
+    return;
+  }
+
+  // MP 低 → 补蓝
+  const mpPct = state.mp / state.maxMp;
+  if (mpPct < 0.2 && hasCapacitor) {
+    battleAction('component', null, null, 'capacitor');
+    return;
+  }
+  // HP 低 → 补红
+  const hpPct = state.hp / state.maxHp;
+  if (hpPct < 0.25 && hasRam) {
+    battleAction('component', null, null, 'ram');
+    return;
+  }
+  // 有晶体管优先（法术伤害×1.5，泛用性最强）
+  if (hasTransistor && state.pendingSpellMul === 1) {
+    battleAction('component', null, null, 'transistor');
+    return;
+  }
+  // 有二极管（普攻必暴）
+  if (hasDiode && !state.pendingCrit) {
+    battleAction('component', null, null, 'diode');
+    return;
+  }
+  // 敌人 HP 高 → 芯片真实伤害
+  if (hasChip && enemy.currentHp > enemy.maxHp * 0.3) {
+    battleAction('component', null, null, 'chip');
+    return;
+  }
+  // 都没有 → 提示
+  showToast('没有可消耗的元器件了');
+}
+
+function endBattle(won) {
+  const bs = state.battleState, enemy = bs.enemy;
+  const rewards = { xp: 0, gold: 0, comps: {}, item: null, lostGold: 0, isFinal: false };
+  const rp = state.regionProgress;
+  const region = state.currentRegion;
+  const isBoss = !!enemy.isBoss;
+
+  if (won) {
+    // === 计算奖励 ===
+    let xpGain, goldGain;
+    if (isBoss && enemy.bossRewards) {
+      // Boss 奖励：额外金币 + 保底芯片和 PCB
+      xpGain = enemy.maxHp / 3;
+      goldGain = enemy.bossRewards.gold;
+      const luckyUsed = state.luckyNextBattle;
+      if (luckyUsed) { xpGain *= 2; goldGain *= 2; state.luckyNextBattle = false; }
+      state.gold += Math.floor(goldGain); state.stats.goldEarned += Math.floor(goldGain);
+      gainXp(Math.floor(xpGain)); state.stats.battlesWon++;
+      hookQuestProgress('kill_enemy', 1);
+      playSFX('death');
+      rewards.xp = Math.floor(xpGain); rewards.gold = Math.floor(goldGain); rewards.lucky = luckyUsed;
+      // Boss 掉落：保底芯片×2-4 + PCB×1-2
+      const br = enemy.bossRewards;
+      for (const [comp, range] of Object.entries(br)) {
+        if (comp === 'gold') continue;
+        const qty = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
+        state.components[comp] = (state.components[comp] || 0) + qty;
+        rewards.comps[comp] = qty;
+      }
+      // Boss 专属装备掉落
+      const bossCfg = REGION_BOSSES[enemy.regionId];
+      if (bossCfg && bossCfg.equipDrop) {
+        const ed = bossCfg.equipDrop;
+        const chances = Array.isArray(ed.chance) ? ed.chance : ed.items.map(() => ed.chance);
+        rewards.equipDrops = [];
+        ed.items.forEach((itemId, i) => {
+          const c = chances[i] !== undefined ? chances[i] : 0.5;
+          if (Math.random() < c) {
+            state.bag[itemId] = (state.bag[itemId] || 0) + 1;
+            rewards.equipDrops.push(itemId);
+            pushLog('crit', `🎁 BOSS 专属掉落! ${ITEMS[itemId].name}`);
+          }
+        });
+      }
+      rewards.isFinal = true;
+    } else {
+      // 普通波次：沿用旧奖励
+      let xpGain2 = enemy.xp, goldGain2 = Math.floor(enemy.gold[0] + Math.random() * (enemy.gold[1] - enemy.gold[0]));
+      if (state.xpBonus) xpGain2 = Math.floor(xpGain2 * (1 + state.xpBonus));
+      if (state.goldBonus) goldGain2 = Math.floor(goldGain2 * (1 + state.goldBonus));
+      const luckyUsed = state.luckyNextBattle;
+      if (luckyUsed) { xpGain2 *= 2; goldGain2 *= 2; state.luckyNextBattle = false; }
+      state.gold += goldGain2; state.stats.goldEarned += goldGain2;
+      gainXp(xpGain2); state.stats.battlesWon++;
+      hookQuestProgress('kill_enemy', 1);
+      playSFX('coin');
+      rewards.xp = xpGain2; rewards.gold = goldGain2; rewards.lucky = luckyUsed;
+      // 元器件掉落
+      const drops = dropComponents(enemy);
+      for (const [comp, qty] of Object.entries(drops)) {
+        state.components[comp] = (state.components[comp] || 0) + qty;
+        rewards.comps[comp] = qty;
+      }
+      // 随机掉落消耗品
+      if (Math.random() < 0.25) {
+        const drops2 = ['heal_pack','mp_pack','big_heal'];
+        const drop = drops2[Math.floor(Math.random() * drops2.length)];
+        state.bag[drop] = (state.bag[drop] || 0) + 1;
+        rewards.item = drop;
+      }
+      // 波次间恢复：普通波 30% HP/MP，Boss 前一波 50% HP/MP
+      const isPreBoss = (rp.waveIdx + 1) === rp.totalWaves;
+      const healPct = isPreBoss ? 0.5 : 0.3;
+      const healHp = Math.floor(state.maxHp * healPct);
+      const healMp = Math.floor(state.maxMp * healPct);
+      state.hp = Math.min(state.maxHp, state.hp + healHp);
+      state.mp = Math.min(state.maxMp, state.mp + healMp);
+    }
+
+    // === 波次推进 ===
+    if (isBoss) {
+      // Boss 通关 → 区域全清，重置进度，关战斗，弹结算
+      state.inBattle = false; state.battleState = null;
+      state.regionProgress = null; state.bossMechanics = null;
+      updateHeader(); saveGame();
+      showSettleModal(true, enemy, rewards, region ? region.name : '');
+    } else {
+      // 普通波 → 波次计数 +1 → 下一波 or 进 Boss（无事件，纯打怪链）
+      rp.waveIdx++;
+      state.inBattle = false; state.battleState = null;
+      state.bossMechanics = null;
+      updateHeader(); saveGame();
+      setTimeout(() => launchNextWave(region), 600);
+    }
+  } else {
+    // === 战败 ===
+    const lost = Math.floor(state.gold * 0.2);
+    if (lost > 0) { state.gold -= lost; rewards.lostGold = lost; }
+    state.xp = Math.floor(state.xp * 0.3);  // 战败重置 30% 修为（比原来更温和）
+    state.stats.battlesLost++;
+    // 战败后差异化恢复
+    if (isBoss) {
+      // Boss 战败：回到区域起点，HP 恢复 50%
+      state.hp = Math.floor(state.maxHp * 0.5); state.mp = Math.floor(state.maxMp * 0.5);
+      state.regionProgress.waveIdx = 0;  // 波次重置
+      state.regionProgress.isBossPhase = false;
+    } else {
+      // 普通战败：HP 恢复 30%，波次重置
+      state.hp = Math.floor(state.maxHp * 0.3); state.mp = Math.floor(state.maxMp * 0.3);
+      state.regionProgress.waveIdx = 0;
+    }
+    state.inBattle = false; state.battleState = null;
+    state.bossMechanics = null;
+    updateHeader(); saveGame();
+    showSettleModal(false, enemy, rewards, region ? region.name : '');
+  }
+}
+
+// 波次间随机事件（比普通事件更"喘息型"）
+function triggerWaveEvent(region, rp) {
+  const waveEvents = [
+    { id: 'merchant', title: '途中遇到游走商人', ascii: '  ╔═══════════╗\n  ║  🧔  💰   ║\n  ╚═══════════╝',
+      desc: '一位游走商人低价出售物资。', choices: [
+        { text: '买 🧪纳米修复包 50灵石', action: 'wave_buy', item: 'heal_pack', cost: 50 },
+        { text: '买 🔋灵力电池 40灵石', action: 'wave_buy', item: 'mp_pack', cost: 40 },
+        { text: '离开', action: 'wave_leave' },
+      ]},
+    { id: 'parts', title: '发现废弃零件堆', ascii: '  ▓▓▓▓▓▓▓▓▓▓\n  ║🟫║🔵║🟨║',
+      desc: '拆解一下能拿些元件。', choices: [
+        { text: '仔细拆解', action: 'wave_comps', comps: { resistor: [2,4], capacitor: [1,3] } },
+        { text: '粗略翻找', action: 'wave_comps', comps: { resistor: [1,2] } },
+      ]},
+    { id: 'heal', title: '灵能回春点', ascii: '  ╔═══╗\n  ║ 🌊 ║\n  ╚═══╝',
+      desc: '发现一处微弱灵泉，可回复部分 HP。', choices: [
+        { text: '饮用 (恢复 40% HP)', action: 'wave_heal', hpPercent: 0.4 },
+        { text: '跳过', action: 'wave_leave' },
+      ]},
+  ];
+  const ev = waveEvents[Math.floor(Math.random() * waveEvents.length)];
+  // 把 region/rp 暂存，事件选择后继续波次
+  window._waveEventContext = { region, rp };
+  showModal(ev.title + ' · 波次间', ev.ascii, ev.desc, ev.choices);
+}
+
+// triggerWaveEvent 保留但已不再从战斗流程触发，仅用于兼容
+function handleWaveEventPost() {
+  const ctx = window._waveEventContext;
+  if (ctx) {
+    setTimeout(() => { launchNextWave(ctx.region); window._waveEventContext = null; }, 400);
+  }
+}
+
+// ========== 修炼奇遇事件（从波次间搬来 + 新增）==========
+function triggerCultivateEvent() {
+  // 50% 被动事件（直接给奖励，不弹窗），50% 主动事件（弹窗选择）
+  if (Math.random() < 0.5) {
+    // 被动事件：直接发奖 + toast
+    const passiveEvents = [
+      { text: '🌊 灵泉涌动！+40% HP', action: () => { state.hp = Math.min(state.maxHp, state.hp + Math.floor(state.maxHp * 0.4)); playSFX('heal'); } },
+      { text: '⚡ 电流共鸣！+30% MP', action: () => { state.mp = Math.min(state.maxMp, state.mp + Math.floor(state.maxMp * 0.3)); } },
+      { text: '✨ 顿悟！+50 修为', action: () => { gainXp(50); playSFX('skill'); } },
+      { text: '💎 灵能凝聚！+2 灵石', action: () => { state.gold += 2; playSFX('coin'); } },
+      { text: '🔩 废弃零件！获得元器件', action: () => { const keys = Object.keys(COMPONENTS); const k = keys[Math.floor(Math.random()*keys.length)]; state.components[k] = (state.components[k]||0)+1; showToast(`奇遇：+1 ${COMPONENTS[k].name}`); } },
+    ];
+    const ev = passiveEvents[Math.floor(Math.random() * passiveEvents.length)];
+    ev.action();
+    showToast('🧘 ' + ev.text);
+    updateHeader(); saveGame();
+  } else {
+    // 主动事件：弹窗让玩家选
+    const activeEvents = [
+      { title: '🧘 修炼奇遇 · 天人感应',
+        ascii: '   ╭─────────╮\n   │  🌌 ✨  │\n   ╰─────────╯',
+        desc: '灵气在体内奔涌，似乎有东西要突破...',
+        choices: [
+          { text: '静心领悟（+100 修为）', action: 'cultivate_gain_xp', amount: 100 },
+          { text: '引导灵气（+20% MP）', action: 'cultivate_mp', mpPercent: 0.2 },
+          { text: '继续修炼', action: 'cultivate_pass' },
+        ]},
+      { title: '🧘 修炼奇遇 · 废弃零件',
+        ascii: '   ▓▓▓▓▓▓▓▓▓▓\n   ║🟫║🔵║🟨║',
+        desc: '闭关之地散落着一些老旧电子元件...',
+        choices: [
+          { text: '仔细拆解（随机 +3-5 元器件）', action: 'cultivate_comps', count: 3, range: 3 },
+          { text: '粗略翻找（随机 +1-2 元器件）', action: 'cultivate_comps', count: 1, range: 2 },
+          { text: '算了', action: 'cultivate_pass' },
+        ]},
+      { title: '🧘 修炼奇遇 · 游方道长',
+        ascii: '   ╔═════════════╗\n   ║  👴  ·  💰   ║\n   ╚═════════════╝',
+        desc: '一位道长路过，愿意低价出售丹药。',
+        choices: [
+          { text: '买 🧪修复包 40灵石', action: 'cultivate_buy', item: 'heal_pack', cost: 40 },
+          { text: '买 🔋灵力电池 30灵石', action: 'cultivate_buy', item: 'mp_pack', cost: 30 },
+          { text: '婉拒', action: 'cultivate_pass' },
+        ]},
+    ];
+    const ev = activeEvents[Math.floor(Math.random() * activeEvents.length)];
+    showModal(ev.title, ev.ascii, ev.desc, ev.choices);
+  }
+}
+
+// 修炼事件选择后的处理
+function handleCultivateEvent(action, data) {
+  switch (action) {
+    case 'cultivate_gain_xp': gainXp(data.amount || 100); break;
+    case 'cultivate_mp': state.mp = Math.min(state.maxMp, state.mp + Math.floor(state.maxMp * (data.mpPercent || 0.2))); break;
+    case 'cultivate_comps': {
+      const count = data.count || 1;
+      const range = data.range || 1;
+      const keys = Object.keys(COMPONENTS);
+      for (let i = 0; i < count; i++) {
+        const k = keys[Math.floor(Math.random() * keys.length)];
+        const qty = 1 + Math.floor(Math.random() * range);
+        state.components[k] = (state.components[k] || 0) + qty;
+      }
+      break;
+    }
+    case 'cultivate_buy': {
+      if (state.gold < data.cost) { showToast('灵石不足！'); return; }
+      state.gold -= data.cost;
+      state.bag[data.item] = (state.bag[data.item] || 0) + 1;
+      break;
+    }
+    case 'cultivate_pass': break;
+  }
+  updateHeader(); saveGame();
+}
+
+function showSettleModal(won, enemy, rewards, regionName) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   const drops = Object.entries(rewards.comps);
   const compChips = drops.map(([c, q]) => `<span class="settle-chip">${COMPONENTS[c].emoji} ${COMPONENTS[c].name.split(' ')[0]} ×${q}</span>`).join('');
   const itemChip = rewards.item ? `<span class="settle-chip">+ ${ITEMS[rewards.item].emoji}${ITEMS[rewards.item].name}</span>` : '';
   const luckyTag = rewards.lucky ? '<div class="settle-chip" style="color:#FAAD14;border-color:#FAAD14;margin-top:8px">🍀 好运符箓 · 双倍奖励!</div>' : '';
+  const finalTag = rewards.isFinal ? '<div style="text-align:center;color:#FAAD14;margin-top:10px;font-weight:600;letter-spacing:2px">🎉 区域通关！</div>' : '';
 
   const body = won ? `
-    <div class="settle-enemy">击败了 <b style="color:var(--blue-200)">${enemy.emoji} ${enemy.name}</b></div>
+    <div class="settle-enemy">击败了 <b style="color:var(--blue-200)">${enemy.emoji} ${enemy.name}</b>${regionName ? `<br><span style="font-size:10px;color:#8B9EB5">【${regionName} · ${enemy.isBoss ? 'Boss 通关' : '波次'}】</span>` : ''}</div>
     <div class="settle-row pos"><span class="label">修为 [EXP]</span><span class="val">+${rewards.xp} Hz</span></div>
     <div class="settle-row pos"><span class="label">灵石 [💰]</span><span class="val">+${rewards.gold}</span></div>
     <div class="settle-divider"></div>
     ${drops.length ? `<div class="settle-drops"><h4>🔩 拆解获得</h4><div class="settle-drop-chips">${compChips}</div></div>` : ''}
     ${rewards.item ? `<div class="settle-drops"><h4>🎁 额外掉落</h4><div class="settle-drop-chips">${itemChip}</div></div>` : ''}
-    ${luckyTag}
+    ${luckyTag} ${finalTag}
   ` : `
     <div class="settle-enemy">被 <b style="color:#FF7875">${enemy.emoji} ${enemy.name}</b> 击败</div>
+    ${regionName ? `<div class="settle-enemy" style="font-size:10px;color:#8B9EB5">【${regionName} · 波次重置】</div>` : ''}
     <div class="settle-row neg"><span class="label">灵石损失</span><span class="val">-${rewards.lostGold}</span></div>
-    <div class="settle-row neg"><span class="label">修为重置</span><span class="val">50%</span></div>
+    <div class="settle-row neg"><span class="label">修为重置</span><span class="val">30%</span></div>
     <div class="settle-divider"></div>
-    <div class="settle-row"><span class="label">状态已恢复</span><span class="val" style="color:#95DE64">满血满蓝</span></div>
+    <div class="settle-row"><span class="label">状态恢复</span><span class="val" style="color:#FFC53D">${enemy.isBoss ? 'HP+MP 恢复 50%' : 'HP+MP 恢复 30%'}</span></div>
+    <div class="settle-row"><span class="label">波次进度</span><span class="val" style="color:#FF7875">重置为第 1 波</span></div>
   `;
 
   overlay.innerHTML = `
     <div class="settle-modal ${won?'settle-win':'settle-lose'}">
-      <div class="settle-header">${won?'⚔️ 战斗胜利':'💀 战败'}</div>
+      <div class="settle-header">${won ? (rewards.isFinal ? '🏆 区域通关!' : '⚔️ 战斗胜利') : '💀 战败'}</div>
       <div class="settle-body">${body}</div>
       <div class="settle-actions">
-        <button class="btn btn-primary" onclick="hideModal();switchTab('explore');">🗺️ 继续探索</button>
-        <button class="btn" style="color:#8B9EB5;border-color:#1E3A5F" onclick="hideModal();switchTab('cultivate');">🧘 闭关</button>
+        ${won ? (rewards.isFinal
+          ? `<button class="btn btn-primary" onclick="hideModal();switchTab('explore');">🗺️ 继续探索</button>
+             <button class="btn" style="color:#8B9EB5;border-color:#1E3A5F" onclick="hideModal();switchTab('cultivate');">🧘 闭关</button>`
+          : `<button class="btn btn-primary" onclick="hideModal();if(state.currentRegion)enterRegion(state.currentRegion)">⚡ 再来一波</button>
+             <button class="btn" style="color:#8B9EB5;border-color:#1E3A5F" onclick="hideModal();switchTab('explore');">🗺️ 换区域</button>`
+        ) : `<button class="btn btn-primary" onclick="hideModal();if(state.currentRegion){enterRegion(state.currentRegion)}else{switchTab('explore')};">🔄 重新挑战</button>
+             <button class="btn" style="color:#8B9EB5;border-color:#1E3A5F" onclick="hideModal();switchTab('explore');">🗺️ 离开</button>`}
       </div>
     </div>
   `;
@@ -2130,7 +3477,55 @@ function renderCraft() {
   // 空元器件提示
   const hasAnyComp = Object.values(state.components).some(v => v > 0);
 
+  // ===== 强化 Tab 内容 =====
+  const enhanceSlots = ['weapon', 'armor', 'accessory'];
+  const enhanceSlotNames = { weapon: '⚔️ 武器', armor: '🛡️ 护甲', accessory: '💍 饰品' };
+  let enhanceHtml = '<div style="margin-top:8px">';
+  for (const slot of enhanceSlots) {
+    const itemId = state.equipped[slot];
+    const enhanceLv = state.equipEnhance[slot] || 0;
+    const enhanceMax = 10;
+    const item = itemId ? ITEMS[itemId] : null;
+    if (!item) {
+      enhanceHtml += `<div class="recipe-card-compact" style="opacity:.5">
+        <div class="recipe-head"><span class="emoji">📦</span><span class="name">${enhanceSlotNames[slot]} · 未装备</span></div>
+      </div>`;
+      continue;
+    }
+    // 强化消耗：随等级递增
+    const costGold = 50 * (enhanceLv + 1) * (item.rarity === 'legend' ? 5 : item.rarity === 'epic' ? 3 : item.rarity === 'rare' ? 2 : 1);
+    const costPcb = Math.min(3, Math.floor(enhanceLv / 2) + 1);
+    const costChip = enhanceLv >= 3 ? Math.min(2, Math.floor((enhanceLv - 2) / 2) + 1) : 0;
+    const enhanceMul = 1 + enhanceLv * 0.12;
+    const nextMul = enhanceLv < enhanceMax ? 1 + (enhanceLv + 1) * 0.12 : null;
+    const canEnhance = enhanceLv < enhanceMax && state.gold >= costGold && (state.components.pcb || 0) >= costPcb && (state.components.chip || 0) >= costChip;
+    enhanceHtml += `
+      <div class="recipe-card-compact">
+        <div class="recipe-head">
+          <span class="emoji">${item.emoji}</span>
+          <span class="name">${item.name} ${enhanceLv > 0 ? `<span style="color:#FFD700;font-weight:800">+${enhanceLv}</span>` : ''}</span>
+          <span style="margin-left:auto;font-size:10px;color:var(--text-dim)">${enhanceLv}/${enhanceMax}</span>
+        </div>
+        <div class="recipe-desc-inline">${item.desc.replace(/\n/g, ' | ')}</div>
+        <div class="recipe-desc-inline" style="color:var(--gold)">当前强化率 ×${enhanceMul.toFixed(2)}${nextMul ? ` → ×${nextMul.toFixed(2)}` : '（已满级）'}</div>
+        ${enhanceLv < enhanceMax ? `
+          <div class="recipe-parts-inline">
+            <span class="${state.gold>=costGold?'enough':'lack'}">💰${costGold}</span>
+            <span class="${(state.components.pcb||0)>=costPcb?'enough':'lack'}">🟫PCB×${costPcb}</span>
+            ${costChip > 0 ? `<span class="${(state.components.chip||0)>=costChip?'enough':'lack'}">🔵芯片×${costChip}</span>` : ''}
+          </div>
+          <div class="recipe-btn-wrap">
+            <button class="btn ${canEnhance?'btn-primary':'disabled-btn'}" style="padding:5px 10px;font-size:11px;width:100%" onclick="tryEnhance('${slot}')" ${canEnhance?'':'disabled'}>
+              ⚒️ 强化 → +${enhanceLv+1}
+            </button>
+          </div>` : `
+          <div class="recipe-desc-inline" style="color:#FFD700;text-align:center;font-weight:700">✨ 已达最高强化 ✨</div>`}
+      </div>`;
+  }
+  enhanceHtml += '</div>';
+
   content.innerHTML = `
+    ${'<!--TAB_PLACEHOLDER-->'}
     <div class="craft-header">
       <h3>🔩 仓库库存</h3>
       <span class="tip" data-tip="去🗺️地图打怪，拆解敌人就能获得元器件！">?</span>
@@ -2141,11 +3536,50 @@ function renderCraft() {
         <div class="hint-desc">去地图打怪，拆解敌人就能获得电阻、电容等电子零件</div>
       </div>
     `}
-    <div class="craft-header" style="margin-top:14px">
-      <h3>📋 可用配方</h3>
-    </div>
     ${allRecipesHtml}
+    ${enhanceHtml}
   `;
+}
+
+// ========== 装备强化 ==========
+function tryEnhance(slot) {
+  const itemId = state.equipped[slot];
+  if (!itemId) { showToast('该槽位未装备任何东西'); return; }
+  const item = ITEMS[itemId];
+  const lv = state.equipEnhance[slot] || 0;
+  if (lv >= 10) { showToast('已达最高强化 +10'); return; }
+
+  // 消耗
+  const costGold = 50 * (lv + 1) * (item.rarity === 'legend' ? 5 : item.rarity === 'epic' ? 3 : item.rarity === 'rare' ? 2 : 1);
+  const costPcb = Math.min(3, Math.floor(lv / 2) + 1);
+  const costChip = lv >= 3 ? Math.min(2, Math.floor((lv - 2) / 2) + 1) : 0;
+
+  if (state.gold < costGold) { showToast(`灵石不足，需要 ${costGold}`); return; }
+  if ((state.components.pcb || 0) < costPcb) { showToast(`PCB板不足`); return; }
+  if ((state.components.chip || 0) < costChip) { showToast(`芯片不足`); return; }
+
+  // 扣材料
+  state.gold -= costGold;
+  state.components.pcb -= costPcb;
+  if (costChip > 0) state.components.chip -= costChip;
+
+  // 基础成功率 +10 到 +100%
+  const successRate = Math.min(1, 1.0 - lv * 0.05);  // +0 时100%, +10时50%
+  const succeed = Math.random() < successRate;
+
+  if (succeed) {
+    state.equipEnhance[slot] = lv + 1;
+    showToast(`✨ ${item.name} 强化成功! +${lv+1} → +${lv+2}`);
+    showDamageFloat('+' + (lv+2) + '✨', 'heal', 'player');
+    playSFX('skill');
+    recalcStats();
+  } else {
+    showToast(`💥 强化失败...成功率 ${Math.floor(successRate*100)}%`);
+    playSFX('warn');
+  }
+  renderCraft();
+  renderProfile();
+  updateBattleUI();
 }
 
 function craftRecipe(recipeId) {
@@ -2461,7 +3895,14 @@ function renderCultivate() {
 }
 
 let meditationTimer = null;
-function cultivateOnce() { gainXp(5 + Math.floor(state.atk * 0.5)); state.mp = Math.min(state.maxMp, state.mp + 2); updateHeader(); saveGame(); }
+let meditationEventCounter = 0;  // 闭关中的事件计数器
+function cultivateOnce() {
+  gainXp(5 + Math.floor(state.atk * 0.5));
+  state.mp = Math.min(state.maxMp, state.mp + 2);
+  updateHeader(); saveGame();
+  // 手动修炼有 5% 概率触发奇遇事件
+  if (Math.random() < 0.05) triggerCultivateEvent();
+}
 
 function startMeditation() {
   if (meditationTimer) { showToast('已在闭关中'); return; }
@@ -2503,6 +3944,12 @@ function tickMeditation() {
     gainXp(2);  // 不满也给经验！修复了之前不加经验的问题
   }
   updateHeader();
+  // 闭关奇遇：每 15 秒（约 7-8 次 tick）有 20% 概率触发
+  meditationEventCounter++;
+  if (meditationEventCounter >= 8) {
+    meditationEventCounter = 0;
+    if (Math.random() < 0.2) triggerCultivateEvent();
+  }
   // 如果修炼面板开着，更新状态文字
   const statusEl = $('meditationStatus');
   if (statusEl) {
@@ -2569,6 +4016,32 @@ function handleEvent(choiceIdx) {
     else showToast('灵石不足');
   }
   else if (a === 'battle_event' && state.currentRegion) startBattle(state.currentRegion, choice.enemyScale);
+  // === 波次间事件处理 ===
+  else if (a === 'wave_buy') {
+    if (state.gold >= choice.cost) { state.gold -= choice.cost; state.bag[choice.item] = (state.bag[choice.item]||0)+1; showToast('购买成功'); }
+    else showToast('灵石不足');
+    handleWaveEventPost();
+  }
+  else if (a === 'wave_comps') {
+    let msg = '';
+    for (const [c, rng] of Object.entries(choice.comps)) {
+      const n = Math.floor(Math.random()*(rng[1]-rng[0]+1))+rng[0];
+      if (n>0) { state.components[c] = (state.components[c]||0)+n; msg += COMPONENTS[c].emoji + n + ' '; }
+    }
+    showToast('>> 拆解获得: ' + msg);
+    handleWaveEventPost();
+  }
+  else if (a === 'wave_heal') {
+    const heal = Math.floor(state.maxHp * choice.hpPercent);
+    state.hp = Math.min(state.maxHp, state.hp + heal);
+    showToast(`>> 恢复 ${heal} HP`);
+    handleWaveEventPost();
+  }
+  else if (a === 'wave_leave') { handleWaveEventPost(); }
+  // === 修炼奇遇事件处理 ===
+  else if (a.startsWith('cultivate_')) {
+    handleCultivateEvent(a, choice);
+  }
   updateHeader(); saveGame();
 }
 
