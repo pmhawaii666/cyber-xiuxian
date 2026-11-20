@@ -977,12 +977,12 @@
     color: #8B9CB8; cursor: pointer; font-size: 14px;
     transition: all 0.2s;
   }
-  .profile-head .close-x:hover { background: #FF4D4F; color: #fff; border-color: #FF4D4F; }
+  .profile-head .close-x:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
 
   .profile-section { padding: 16px 24px; border-bottom: 1px solid rgba(22,119,255,0.15); }
   .profile-section:last-child { border-bottom: none; }
   .profile-section h4 {
-    color: #1677FF; font-size: 13px; margin-bottom: 12px;
+    color: var(--blue-400); font-size: 13px; margin-bottom: 12px;
     padding-bottom: 6px; border-bottom: 1px dashed rgba(22,119,255,0.3);
   }
 
@@ -998,7 +998,7 @@
   .attr-row .val { color: #fff; font-weight: 700; font-family: Consolas, monospace; }
   .attr-row .val.red { color: #FF7875; }
   .attr-row .val.blue { color: #69B1FF; }
-  .attr-row .val.gold { color: #FAAD14; }
+  .attr-row .val.gold { color: var(--gold); }
 
   /* 设置滑块 */
   .setting-row {
@@ -1016,9 +1016,9 @@
   .vol-slider::-webkit-slider-thumb {
     -webkit-appearance: none; appearance: none;
     width: 16px; height: 16px; border-radius: 50%;
-    background: #1677FF; cursor: pointer; box-shadow: 0 0 8px #1677FF;
+    background: var(--blue-400); cursor: pointer; box-shadow: 0 0 8px var(--blue-400);
   }
-  .vol-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #1677FF; cursor: pointer; border: none; }
+  .vol-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--blue-400); cursor: pointer; border: none; }
 
   /* 开关按钮 */
   .toggle-btn {
@@ -1026,7 +1026,7 @@
     background: transparent; color: #8B9CB8; cursor: pointer; font-size: 12px;
     transition: all 0.2s;
   }
-  .toggle-btn.on { background: #1677FF; border-color: #1677FF; color: #fff; }
+  .toggle-btn.on { background: var(--blue-400); border-color: var(--blue-400); color: #fff; }
 
   /* 统计卡片 */
   .stat-mini {
@@ -1035,10 +1035,10 @@
   }
   .stat-mini:last-child { border-bottom: none; }
   .stat-mini .sl { color: #8B9CB8; }
-  .stat-mini .sv { color: #FAAD14; font-family: Consolas, monospace; font-weight: 600; }
+  .stat-mini .sv { color: var(--gold); font-family: Consolas, monospace; font-weight: 600; }
 
   .btn-danger {
-    width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #FF4D4F;
+    width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--danger);
     background: rgba(255,77,79,0.1); color: #FF7875; cursor: pointer;
     font-size: 13px; margin-top: 8px; transition: all 0.2s;
   }
@@ -2001,7 +2001,7 @@ function showWaveFlash(title, sub, color = 'blue') {
     : 'linear-gradient(90deg, rgba(22,119,255,0.1) 0%, rgba(22,119,255,0.5) 50%, rgba(22,119,255,0.1) 100%)';
   overlay.innerHTML = `
     <div style="position:fixed;top:30%;left:50%;transform:translateX(-50%);z-index:9999;text-align:center;pointer-events:none">
-      <div style="background:${bg};padding:20px 60px;border-radius:10px;border:2px solid ${color==='red'?'#FF4D4F':'#1677FF'};box-shadow:0 0 40px ${color==='red'?'#FF4D4F':'#1677FF'};backdrop-filter:blur(6px);animation:waveFlash 0.8s ease-out forwards">
+      <div style="background:${bg};padding:20px 60px;border-radius:10px;border:2px solid ${color==='red'?'var(--danger)':'var(--blue-400)'};box-shadow:0 0 40px ${color==='red'?'var(--danger)':'var(--blue-400)'};backdrop-filter:blur(6px);animation:waveFlash 0.8s ease-out forwards">
         <div style="font-size:22px;font-weight:800;color:#fff;letter-spacing:3px;text-shadow:0 0 20px currentColor">${title}</div>
         <div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:6px;letter-spacing:1px">${sub}</div>
       </div>
@@ -2138,47 +2138,45 @@ function renderBattlePanel() {
       return `<button class="btn btn-info battle-quick" onclick="battleAction('component','${k}')" title="${act.desc}" style="min-width:auto">${act.emoji}×${qty}</button>`;
     }).join('');
 
-  // 区域进度 HUD
+  // 区域进度 HUD（甜美风）
   const rp = state.regionProgress;
   const region = state.currentRegion;
   let regionHud = '';
   if (rp && region) {
     if (rp.isBossPhase) {
-      // Boss 阶段 HUD
       const bm = state.bossMechanics || {};
       const phaseIdx = bm.phaseIdx || 1;
       const totalPhases = (REGION_BOSSES[rp.regionId]?.phases?.length || 1);
       regionHud = `
-        <div style="position:absolute;top:6px;left:8px;right:8px;background:rgba(255,77,79,0.15);border:1px solid #FF4D4F;border-radius:6px;padding:6px 10px;font-size:11px">
-          <span style="color:#FF7875;font-weight:700;letter-spacing:1px">⚠️ BOSS</span>
-          <span style="margin-left:8px;color:#fff">${region.name} · Phase ${phaseIdx}/${totalPhases}</span>
-          ${bm.selfDestructing ? '<span style="margin-left:8px;color:#FFC53D">💥 自爆中</span>' : ''}
-          ${bm.evadePhase ? '<span style="margin-left:8px;color:#B37FEB">👻 虚化</span>' : ''}
-          ${bm.regenPhase ? '<span style="margin-left:8px;color:#52C41A">💚 回复中</span>' : ''}
-          ${bm.overclockActive ? '<span style="margin-left:8px;color:#FF7875">🔥 超频</span>' : ''}
-          ${bm.chargeCount ? `<span style="margin-left:8px;color:#FAAD14">⚡ 充能 ${bm.chargeCount}/${REGION_BOSSES[rp.regionId]?.chargeTurns||3}</span>` : ''}
-          ${bm.countdownActive ? `<span style="margin-left:8px;color:#FF4D4F;font-weight:800">⚠️ 飞升 ${3-(bm.countdownTurns||0)}</span>` : ''}
+        <div style="position:absolute;top:6px;left:8px;right:8px;background:linear-gradient(135deg,#FFE4EC,#FFF5F8);border:1.5px solid var(--pink-400);border-radius:14px;padding:6px 12px;font-size:11px;box-shadow:0 4px 14px rgba(255,112,150,0.2)">
+          <span style="color:var(--pink-600);font-weight:800;letter-spacing:1px">👑 BOSS</span>
+          <span style="margin-left:8px;color:var(--text)">${region.name} · Phase ${phaseIdx}/${totalPhases}</span>
+          ${bm.selfDestructing ? '<span style="margin-left:8px;color:var(--danger)">💥 自爆中</span>' : ''}
+          ${bm.evadePhase ? '<span style="margin-left:8px;color:#A06BE6">👻 虚化</span>' : ''}
+          ${bm.regenPhase ? '<span style="margin-left:8px;color:var(--success)">💚 回复中</span>' : ''}
+          ${bm.overclockActive ? '<span style="margin-left:8px;color:var(--danger)">🔥 超频</span>' : ''}
+          ${bm.chargeCount ? `<span style="margin-left:8px;color:var(--gold)">⚡ 充能 ${bm.chargeCount}/${REGION_BOSSES[rp.regionId]?.chargeTurns||3}</span>` : ''}
+          ${bm.countdownActive ? `<span style="margin-left:8px;color:var(--danger);font-weight:800">⚠️ 飞升 ${3-(bm.countdownTurns||0)}</span>` : ''}
         </div>`;
     } else {
-      // 普通波次 HUD
       const wIdx = rp.waveIdx + 1;
       const total = rp.totalWaves;
       const wavePct = Math.floor((wIdx / total) * 100);
       regionHud = `
-        <div style="position:absolute;top:6px;left:8px;right:8px;background:rgba(22,119,255,0.12);border:1px solid #1677FF;border-radius:6px;padding:5px 10px;font-size:11px">
-          <span style="color:#69C0FF;font-weight:700">🗺️ ${region.name}</span>
-          <span style="margin-left:8px;color:#fff">第 ${wIdx}/${total} 波</span>
-          <div style="display:inline-block;margin-left:10px;width:80px;height:6px;background:#111827;border-radius:3px;overflow:hidden;vertical-align:middle">
-            <div style="height:100%;width:${wavePct}%;background:linear-gradient(90deg,#1677FF,#69C0FF);border-radius:3px;transition:width .4s"></div>
+        <div style="position:absolute;top:6px;left:8px;right:8px;background:linear-gradient(135deg,#E8F4FF,#FFF5F8);border:1.5px solid var(--blue-300);border-radius:14px;padding:5px 12px;font-size:11px;box-shadow:0 4px 14px rgba(126,200,255,0.2)">
+          <span style="color:var(--blue-400);font-weight:700">🗺️ ${region.name}</span>
+          <span style="margin-left:8px;color:var(--text)">第 ${wIdx}/${total} 波</span>
+          <div style="display:inline-block;margin-left:10px;width:80px;height:6px;background:rgba(0,0,0,0.05);border-radius:10px;overflow:hidden;vertical-align:middle">
+            <div style="height:100%;width:${wavePct}%;background:linear-gradient(90deg,var(--pink-400),var(--blue-300));border-radius:10px;transition:width .4s"></div>
           </div>
-          <span style="margin-left:6px;color:#B37FEB;font-size:9px">清完 → Boss</span>
+          <span style="margin-left:6px;color:var(--text-dim);font-size:9px">清完 → Boss</span>
         </div>`;
     }
   }
 
-  // Boss 专属特效环（BOSS 战给敌方加红色光环）
-  const enemyRing = enemy.isBoss ? 'box-shadow:0 0 20px rgba(255,77,79,0.6);border:2px solid #FF4D4F;' : '';
-  const enemyNameTag = enemy.isBoss ? `<div style="font-size:9px;color:#FF7875;letter-spacing:1px;margin-top:2px;font-weight:700">⚡ BOSS</div>` : '';
+  // Boss 专属光环
+  const enemyRing = enemy.isBoss ? 'box-shadow:0 0 24px rgba(255,112,150,0.5);border:2px solid var(--pink-500);border-radius:18px;padding:14px;background:linear-gradient(135deg,#FFE4EC,#FFF5F8)' : '';
+  const enemyNameTag = enemy.isBoss ? `<div style="font-size:9px;color:var(--pink-600);letter-spacing:1px;margin-top:2px;font-weight:800">👑 BOSS</div>` : '';
 
   content.innerHTML = `
     <div class="battle-arena" style="position:relative">
@@ -2206,10 +2204,10 @@ function renderBattlePanel() {
     <div class="battle-log" id="battleLog">${bs.logs.map(l => `<p class="log-${l.type}">> ${l.text}</p>`).join('')}</div>
     <!-- 主行动按钮 -->
     <div class="battle-actions">
-      <button class="btn btn-danger" onclick="battleAction('attack')" title="[Q]">⚔️ ATTACK <span style="font-size:9px;opacity:.6">[Q]</span></button>
-      <button class="btn" onclick="battleActionComponentSmart()" style="border-color:var(--blue-400);color:var(--blue-300)" title="[W] 智能增效">🛡️ 增效 <span style="font-size:9px;opacity:.6">[W]</span></button>
-      <button class="btn" onclick="battleAction('flee')" style="border-color:#888;color:#888" title="[E]">🏃 FLEE <span style="font-size:9px;opacity:.6">[E]</span></button>
-      <button class="btn ${state.autoBattle?'btn-success':'btn-info'}" onclick="toggleAutoBattle()" title="[R] 自动战斗开关" style="${state.autoBattle?'animation:pulseGlow 1s infinite':''}">🤖 ${state.autoBattle?'ON':'AUTO'} <span style="font-size:9px;opacity:.6">[R]</span></button>
+      <button class="btn btn-danger" onclick="battleAction('attack')" title="[Q]">⚔️ 普攻 <span style="font-size:9px;opacity:.6">[Q]</span></button>
+      <button class="btn" onclick="battleActionComponentSmart()" style="border-color:var(--blue-400);color:var(--blue-400)" title="[W] 智能增效">🛡️ 增效 <span style="font-size:9px;opacity:.6">[W]</span></button>
+      <button class="btn" onclick="battleAction('flee')" style="border-color:#AAA;color:#999" title="[E]">🏃 撤退 <span style="font-size:9px;opacity:.6">[E]</span></button>
+      <button class="btn ${state.autoBattle?'btn-success':'btn-info'}" onclick="toggleAutoBattle()" title="[R] 自动战斗开关" style="${state.autoBattle?'animation:pulseGlow 1s infinite':''}">🤖 ${state.autoBattle?'自动中':'自动'} <span style="font-size:9px;opacity:.6">[R]</span></button>
     </div>
     <!-- 快捷键提示条 -->
     <div style="text-align:center;font-size:9px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">
@@ -3741,8 +3739,8 @@ function showSettleModal(won, enemy, rewards, regionName) {
   const drops = Object.entries(rewards.comps);
   const compChips = drops.map(([c, q]) => `<span class="settle-chip">${COMPONENTS[c].emoji} ${COMPONENTS[c].name.split(' ')[0]} ×${q}</span>`).join('');
   const itemChip = rewards.item ? `<span class="settle-chip">+ ${ITEMS[rewards.item].emoji}${ITEMS[rewards.item].name}</span>` : '';
-  const luckyTag = rewards.lucky ? '<div class="settle-chip" style="color:#FAAD14;border-color:#FAAD14;margin-top:8px">🍀 好运符箓 · 双倍奖励!</div>' : '';
-  const finalTag = rewards.isFinal ? '<div style="text-align:center;color:#FAAD14;margin-top:10px;font-weight:600;letter-spacing:2px">🎉 区域通关！</div>' : '';
+  const luckyTag = rewards.lucky ? '<div class="settle-chip" style="color:var(--gold);border-color:var(--gold);margin-top:8px">🍀 好运符箓 · 双倍奖励!</div>' : '';
+  const finalTag = rewards.isFinal ? '<div style="text-align:center;color:var(--gold);margin-top:10px;font-weight:600;letter-spacing:2px">🎉 区域通关！</div>' : '';
 
   const body = won ? `
     <div class="settle-enemy">击败了 <b style="color:var(--blue-200)">${enemy.emoji} ${enemy.name}</b>${regionName ? `<br><span style="font-size:10px;color:#8B9EB5">【${regionName} · ${enemy.isBoss ? 'Boss 通关' : '波次'}】</span>` : ''}</div>
@@ -4113,7 +4111,7 @@ function renderSkills() {
 
   // ===== 快捷栏配置区 =====
   html += `<div style="border:1px dashed var(--blue-500);border-radius:6px;padding:10px;margin-bottom:10px;background:rgba(22,119,255,0.05)">
-    <div style="font-size:12px;color:#1677FF;font-weight:600;margin-bottom:6px">⚔️ 战斗快捷栏配置（最多 4 个）</div>
+    <div style="font-size:12px;color:var(--blue-400);font-weight:600;margin-bottom:6px">⚔️ 战斗快捷栏配置（最多 4 个）</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">`;
   for (let i = 0; i < 4; i++) {
     const sid = sb[i];
@@ -4133,8 +4131,8 @@ function renderSkills() {
     const sk = SKILLS.find(s => s.id === sid);
     const inBar = sb.includes(sid);
     const toggle = inBar ? `removeFromSkillBar('${sid}')` : `addToSkillBar('${sid}')`;
-    const starStyle = inBar ? 'color:#FAAD14' : 'color:#666';
-    return `<div class="skill-card ${inBar?'skill-in-bar':''}" style="${inBar?'border-color:#FAAD14;background:rgba(250,173,20,0.08)':''}">
+    const starStyle = inBar ? 'color:var(--gold)' : 'color:#666';
+    return `<div class="skill-card ${inBar?'skill-in-bar':''}" style="${inBar?'border-color:var(--gold);background:rgba(250,173,20,0.08)':''}">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div class="skill-name">${sk.emoji||'✨'} ${sk.name}</div>
         <button onclick="${toggle}" style="background:none;border:none;font-size:16px;cursor:pointer;${starStyle}" title="${inBar?'从快捷栏移除':'加入快捷栏'}">${inBar?'★':'☆'}</button>
@@ -4238,14 +4236,14 @@ function renderCultivate() {
   const cultMode = isFull ? '修炼中 (+10Hz / +5MP)' : '恢复中 (+5%HP / +10%MP / +2Hz)';
   content.innerHTML = `
     <div style="text-align:center;padding:20px">
-      <pre style="color:#1677FF;font-size:10px;line-height:1.1;margin-bottom:12px">
+      <pre style="color:var(--blue-400);font-size:10px;line-height:1.1;margin-bottom:12px">
      ╔═══════════════════╗
      ║    ▓ 闭关 修炼 ▓    ║
      ║   ╔═══╗  ╔═══╗    ║
      ║   ║🧘║  ⚡║    ║
      ║   ╚═══╝  ╚═══╝    ║
      ╚═══════════════════╝</pre>
-      <p style="color:#FAAD14;font-size:12px;margin-bottom:4px">当前境界: [ ${getRealmName()} ]</p>
+      <p style="color:var(--gold);font-size:12px;margin-bottom:4px">当前境界: [ ${getRealmName()} ]</p>
       <p style="color:#8B9CB8;font-size:11px;margin-bottom:14px">HP ${state.hp}/${state.maxHp} · MP ${state.mp}/${state.maxMp}</p>
       <button class="btn btn-success" style="font-size:14px;padding:14px 28px" onclick="cultivateOnce()">
         ▶ 手动修炼 +${xpPerClick} Hz
@@ -4258,7 +4256,7 @@ function renderCultivate() {
         ${inCultivation ? `>> ${cultMode}` : '>> 点击开始闭关，自动积累修为'}
       </div>
       <div style="margin-top:16px;padding:12px;background:rgba(22,119,255,0.08);border-radius:8px;font-size:11px;color:#8B9CB8;text-align:left;line-height:1.8">
-        💡 <b style="color:#1677FF">闭关规则：</b><br>
+        💡 <b style="color:var(--blue-400)">闭关规则：</b><br>
         · HP/MP 未满 → 先恢复气血（同时 +2Hz 经验）<br>
         · 恢复满后 → 自动切换修炼模式（+10Hz / +5MP）<br>
         · 闭关在后台持续运行，切面板/刷新都不中断
@@ -4560,7 +4558,7 @@ function updateQuestBadge() {
     const qs = state.quests[q.id];
     return qs && !qs.claimed && qs.progress >= q.target.count;
   });
-  btn.innerHTML = canClaim ? '📋 <span style="background:#FF4D4F;color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;display:inline-block;min-width:14px;text-align:center">!</span>' : '📋';
+  btn.innerHTML = canClaim ? '📋 <span style="background:var(--danger);color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;display:inline-block;min-width:14px;text-align:center">!</span>' : '📋';
 }
 
 function renderQuests() {
@@ -4571,7 +4569,7 @@ function renderQuests() {
   Object.entries(groups).forEach(([type, label]) => {
     const quests = QUESTS.filter(q => q.type === type);
     if (!quests.length) return;
-    html += `<h3 style="margin-top:10px;margin-bottom:6px;color:#1677FF">${label}</h3>`;
+    html += `<h3 style="margin-top:10px;margin-bottom:6px;color:var(--blue-400)">${label}</h3>`;
     quests.forEach(q => {
       const qs = state.quests[q.id] || { progress: 0, claimed: false };
       const progress = Math.min(qs.progress, q.target.count);
@@ -4592,9 +4590,9 @@ function renderQuests() {
               <div style="color:#8B9CB8;font-size:10px">${q.desc}</div>
             </div>
             <div style="text-align:right">
-              <div style="font-size:11px;color:#FAAD14">奖励: ${rewardStr}</div>
+              <div style="font-size:11px;color:var(--gold)">奖励: ${rewardStr}</div>
               ${qs.claimed
-                ? '<span style="font-size:10px;color:#52C41A">✓ 已领取</span>'
+                ? '<span style="font-size:10px;color:var(--success)">✓ 已领取</span>'
                 : canClaim
                   ? `<button class="btn btn-success" style="padding:4px 10px;font-size:10px" onclick="claimQuest('${q.id}')">领取</button>`
                   : `<span style="font-size:10px;color:#8B9CB8">${progress}/${q.target.count}</span>`
